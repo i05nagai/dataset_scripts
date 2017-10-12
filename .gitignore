@@ -1,0 +1,12 @@
+/scripts/imagenet/images
+/example_keras/image
+
+# for osx
+.DS_Store
+# python
+__pycache__
+*.pyc
+# images
+*.jpg
+*.png
+*.gif

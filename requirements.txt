@@ -1,0 +1,5 @@
+requests
+scrapy
+pillow
+keras
+yaml
