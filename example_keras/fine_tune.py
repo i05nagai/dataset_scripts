@@ -6,6 +6,8 @@ from keras.utils.np_utils import to_categorical
 import keras
 import keras.applications.vgg16 as vgg16
 import keras.applications.resnet50 as resnet50
+# import keras.applications.inception_resnet_v2 as inception_resnet_v2
+import keras.applications.inception_v3 as inception_v3
 import keras.layers as layers
 import math
 import numpy as np
@@ -27,6 +29,22 @@ def _vgg16_top_fully_connected_layers(num_class, input_shape):
     top_model.add(layers.Dense(256, activation='relu'))
     top_model.add(layers.Dropout(0.5))
     top_model.add(layers.Dense(num_class, activation='sigmoid'))
+    return top_model
+
+
+def _inception_resnet_v2_top_fully_connected_layers(num_class, input_shape):
+    top_model = keras.models.Sequential()
+    top_model.add(layers.GlobalAveragePooling2D(
+        input_shape=input_shape, name='avg_pool'))
+    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
+    return top_model
+
+
+def _inception_v3_top_fully_connected_layers(num_class, input_shape):
+    top_model = keras.models.Sequential()
+    top_model.add(layers.GlobalAveragePooling2D(
+        input_shape=input_shape, name='avg_pool'))
+    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
     return top_model
 
 
@@ -66,6 +84,14 @@ class FineTuner(object):
             self.model = resnet50.ResNet50
             self.top_model = _resnet50_top_fully_connected_layers
             self.num_trainable_layers = 173
+        elif model_name == 'inception_resnet_v2':
+            # self.model = inception_resnet_v2.InceptionResNetV2
+            self.top_model = _inception_resnet_v2_top_fully_connected_layers
+            self.num_trainable_layers = 310
+        elif model_name == 'inception_v3':
+            self.model = inception_v3.InceptionV3
+            self.top_model = _inception_v3_top_fully_connected_layers
+            self.num_trainable_layers = 310
         else:
             self.model = vgg16.VGG16
             self.top_model = _vgg16_top_fully_connected_layers
@@ -101,7 +127,7 @@ class FineTuner(object):
         if path_to_weight_fine_tune is not None:
             model_trained.load_weights(path_to_weight_fine_tune)
 
-        print('vgg16_model: {0}'.format(model))
+        print('bottleneck_model: {0}'.format(model))
         print('top_model: {0}'.format(top_model))
         print('model: {0}'.format(model))
         return model_trained
@@ -360,7 +386,7 @@ def main():
     path_to_weight_fine_tune = settings.path_to_weight_fine_tune
     path_to_history_fine_tune = settings.path_to_history_fine_tune
 
-    fine_tuner = FineTuner('resnet50')
+    fine_tuner = FineTuner('inception_v3')
     fine_tuner.train(
         path_to_image_train,
         path_to_bottleneck_feature_train,
