@@ -1,3 +1,4 @@
+import datetime
 import errno
 import keras.preprocessing.image as image
 import matplotlib.pyplot as plt
@@ -53,3 +54,25 @@ def draw_image_from_array(x):
     img = image.array_to_img(x)
     plt.imshow(img)
     plt.show()
+
+
+def current_datetime_str():
+    now = datetime.datetime.now()
+    date_string = now.strftime('%Y_%m_%d_%h_%m_%s')
+    return date_string
+
+
+def add_prefix(path, prefix, separator='_'):
+    filename = os.path.basename(path)
+    filename_new = '{0}{1}{2}'.format(prefix, separator, filename)
+    dirpath = os.path.dirname(path)
+    path_new = os.path.join(dirpath, filename_new)
+    return path_new
+
+
+def add_suffix(path, suffix, separator='_'):
+    filename, ext = os.path.splitext(os.path.basename(path))
+    filename_new = '{0}{1}{2}.{3}'.format(filename, separator, suffix, ext)
+    dirpath = os.path.dirname(path)
+    path_new = os.path.join(dirpath, filename_new)
+    return path_new
