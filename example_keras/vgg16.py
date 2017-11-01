@@ -260,15 +260,6 @@ def predict(path_to_image, target_size, num_class, path_to_weight_fine_tune):
     return model.predict(xs)
 
 
-def gen_labels(batch_size, num_per_class, num_class):
-    labels = []
-    for i in range(num_class):
-        labels += [i] * num_per_class
-    labels = to_categorical(labels)
-    print('len(labels): {0}'.format(len(labels)))
-    return np.array(labels)
-
-
 def main():
     # paths
     path_to_image_train = settings.path_to_image_train
