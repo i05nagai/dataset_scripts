@@ -14,6 +14,22 @@ import util
 import settings
 
 
+def _resnet50_top_fully_connected_layers(num_class, input_shape):
+    top_model = keras.models.Sequential()
+    top_model.add(layers.Flatten(input_shape=input_shape))
+    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
+    return top_model
+
+
+def _vgg16_top_fully_connected_layers(num_class, input_shape):
+    top_model = keras.models.Sequential()
+    top_model.add(layers.Flatten(input_shape=input_shape))
+    top_model.add(layers.Dense(256, activation='relu'))
+    top_model.add(layers.Dropout(0.5))
+    top_model.add(layers.Dense(num_class, activation='sigmoid'))
+    return top_model
+
+
 def directory_iterator(
         path_to_image,
         target_size,
@@ -48,18 +64,13 @@ class FineTuner(object):
     def __init__(self, model_name):
         if model_name == 'resnet50':
             self.model = resnet50.ResNet50
+            self.top_model = _resnet50_top_fully_connected_layers
+            self.num_trainable_layers = 173
         else:
             self.model = vgg16.VGG16
+            self.top_model = _vgg16_top_fully_connected_layers
+            self.num_trainable_layers = 15
         self.model_name = model_name
-
-    def fully_connected_layers(self, num_class, input_shape):
-        # Fully Connected layers
-        top_model = keras.models.Sequential()
-        top_model.add(layers.Flatten(input_shape=input_shape))
-        top_model.add(layers.Dense(256, activation='relu'))
-        top_model.add(layers.Dropout(0.5))
-        top_model.add(layers.Dense(num_class, activation='sigmoid'))
-        return top_model
 
     def combined_model(
             self,
@@ -75,7 +86,7 @@ class FineTuner(object):
         model = self.model(
             include_top=False, weights='imagenet', input_tensor=input_tensor)
         # Fully connected layers
-        top_model = self.fully_connected_layers(
+        top_model = self.top_model(
             num_class,
             model.output_shape[1:])
         # load weights for fc layer
@@ -156,7 +167,7 @@ class FineTuner(object):
         data_train = np.load(path_to_train)
         print('data_train.shape: {0}'.format(data_train.shape))
 
-        model = self.fully_connected_layers(num_class, data_train.shape[1:])
+        model = self.top_model(num_class, data_train.shape[1:])
         model.compile(loss='categorical_crossentropy',
                       optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
                       metrics=['accuracy'])
@@ -207,7 +218,7 @@ class FineTuner(object):
         for i in range(len(model.layers)):
             print(i, model.layers[i])
 
-        for layer in model.layers[:15]:
+        for layer in model.layers[:self.num_trainable_layers]:
             layer.trainable = False
 
         model.compile(loss='binary_crossentropy',
@@ -349,7 +360,7 @@ def main():
     path_to_weight_fine_tune = settings.path_to_weight_fine_tune
     path_to_history_fine_tune = settings.path_to_history_fine_tune
 
-    fine_tuner = FineTuner('vgg16')
+    fine_tuner = FineTuner('resnet50')
     fine_tuner.train(
         path_to_image_train,
         path_to_bottleneck_feature_train,
