@@ -84,7 +84,7 @@ class FineTuner(object):
         # combine vgg16 and our models
         # https://github.com/fchollet/keras/issues/4040
         model_trained = keras.engine.training.Model(
-            input=model.input, output=top_model(model.output))
+            inputs=model.input, outputs=top_model(model.output))
 
         # load weights for fine-tuned combined_model
         if path_to_weight_fine_tune is not None:

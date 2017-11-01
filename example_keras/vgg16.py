@@ -163,7 +163,7 @@ def combined_model(
     # combine vgg16 and our models
     # https://github.com/fchollet/keras/issues/4040
     model = keras.engine.training.Model(
-        input=vgg16_model.input, output=top_model(vgg16_model.output))
+        inputs=vgg16_model.input, outputs=top_model(vgg16_model.output))
 
     # load weights for fine-tuned combined_model
     if path_to_weight_fine_tune is not None:
