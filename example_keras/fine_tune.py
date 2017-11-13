@@ -428,11 +428,6 @@ def main():
         default='indeption_v3',
         help='help message of this argument')
     parser.add_argument(
-        '--model',
-        action='store_true',
-        default=False,
-        help='train or not')
-    parser.add_argument(
         '--train',
         action='store_true',
         default=False,
