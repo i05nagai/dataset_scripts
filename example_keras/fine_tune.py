@@ -371,7 +371,7 @@ class FineTuner(object):
         return model.predict(xs)
 
 
-def main():
+def train(model_name):
     # paths
     path_to_image_train = settings.path_to_image_train
     path_to_bottleneck_feature_train = settings.path_to_bottleneck_feature_train
@@ -401,15 +401,56 @@ def main():
         path_to_history_fine_tune,
         epochs)
 
-    # predict by combined model
+
+def predict(images, model_name):
+    fine_tuner = FineTuner('inception_v3')
     path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
-    path_to_image = os.path.join(
-        path_to_this_dir,
-        'hoge')
-    print('path_to_image: {0}'.format(path_to_image))
-    # results = predict(
-    #     path_to_image, target_size, num_class, path_to_weight_fine_tune)
-    # print(results)
+
+    num_class = len(settings.categories)
+    path_to_weight_fine_tune = settings.path_to_weight_fine_tune
+    target_size = settings.target_size
+
+    for image in images:
+        path_to_image = os.path.join(path_to_this_dir, image)
+        print('path_to_image: {0}'.format(path_to_image))
+        results = fine_tuner.predict(
+            path_to_image, target_size, num_class, path_to_weight_fine_tune)
+        print(results)
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="keras fine tuner")
+    parser.add_argument(
+        '--model',
+        type=str,
+        choices=['vgg16', 'inception_v3'],
+        default='indeption_v3',
+        help='help message of this argument')
+    parser.add_argument(
+        '--model',
+        action='store_true',
+        default=False,
+        help='train or not')
+    parser.add_argument(
+        '--train',
+        action='store_true',
+        default=False,
+        help='train or not')
+    parser.add_argument(
+        '--predict',
+        metavar="PATH_TO_IMAGE",
+        type=str,
+        nargs='+',
+        help='specify path to image')
+    args = parser.parse_args()
+
+    model_name = args.model
+    if args.train:
+        train(model_name)
+    else:
+        path_to_images = args.predict
+        predict(path_to_images, model_name)
 
 
 if __name__ == '__main__':
