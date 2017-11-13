@@ -443,7 +443,7 @@ def main():
     model_name = args.model
     if args.train:
         train(model_name)
-    else:
+    elif args.predict:
         path_to_images = args.predict
         predict(path_to_images, model_name)
 
