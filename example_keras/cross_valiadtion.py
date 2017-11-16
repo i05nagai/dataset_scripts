@@ -37,6 +37,11 @@ def get_paths_and_labels(path_to_train, path_to_validation, classes):
     return paths, labels
 
 
+def path_to_image_array(paths):
+    xs = util.load_single_image(paths, target_size)
+    return xs
+
+
 def cross_validation(
         model, path_to_train, path_to_validation, classes, n_splits):
     xs, ys = get_paths_and_labels(path_to_train, path_to_validation, classes)
@@ -44,10 +49,9 @@ def cross_validation(
     ys = np.array(ys)
     kfold = model_selection.StratifiedKFold(n_splits=n_splits, shuffle=True)
     for train, test in kfold.split(xs, ys):
-        print(xs[train])
-        print(ys[train])
-        # result = model.predict(xs[train])
-        # max_index = np.argmax(result)
+        for x in zip(xs[train], ys[train]):
+            result = model.predict(x)
+            max_index = np.argmax(result)
 
 
 def main():

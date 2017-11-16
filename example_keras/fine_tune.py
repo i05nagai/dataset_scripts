@@ -387,7 +387,7 @@ def train(model_name):
     path_to_weight_fine_tune = settings.path_to_weight_fine_tune
     path_to_history_fine_tune = settings.path_to_history_fine_tune
 
-    fine_tuner = FineTuner('inception_v3')
+    fine_tuner = FineTuner(model_name)
     fine_tuner.train(
         path_to_image_train,
         path_to_bottleneck_feature_train,
@@ -403,18 +403,8 @@ def train(model_name):
         epochs)
 
 
-def prediction_to_label(result, classes):
-    """prediction_to_label
-
-    :param result: array of array
-    :param classes: array of string
-    """
-
-    return [dict(zip(classes, r)) for r in result]
-
-
 def predict(images, model_name, classes=None):
-    fine_tuner = FineTuner('inception_v3')
+    fine_tuner = FineTuner(model_name)
     path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
 
     num_class = len(settings.categories)
@@ -429,7 +419,7 @@ def predict(images, model_name, classes=None):
             path_to_image, target_size, num_class, path_to_weight_fine_tune)
 
         if classes is not None:
-            result = prediction_to_label(result, classes)
+            result = util.prediction_to_label(result, classes)
 
         results.append(result)
     return results
@@ -440,7 +430,7 @@ def main():
     parser.add_argument(
         '--model',
         type=str,
-        choices=['vgg16', 'inception_v3'],
+        choices=['vgg16', 'inception_v3', 'resnet50'],
         default='indeption_v3',
         help='help message of this argument')
     parser.add_argument(
