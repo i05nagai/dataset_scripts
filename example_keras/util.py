@@ -43,7 +43,7 @@ def load_single_image(path_to_img, target_size):
     return xs
 
 
-def add_image(xs, path_to_image, target_size=(224, 224)):
+def add_image(xs, path_to_image):
     x = load_single_image(path_to_image)
     # (samples, rows, cols, channels)
     xs = np.append(xs, x, axis=0)

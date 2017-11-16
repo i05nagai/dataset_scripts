@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from keras.preprocessing import image
 from keras.utils.np_utils import to_categorical
+import argparse
 import keras
 import keras.applications.vgg16 as vgg16
 import keras.applications.resnet50 as resnet50
@@ -402,7 +403,17 @@ def train(model_name):
         epochs)
 
 
-def predict(images, model_name):
+def prediction_to_label(result, classes):
+    """prediction_to_label
+
+    :param result: array of array
+    :param classes: array of string
+    """
+
+    return [dict(zip(classes, r)) for r in result]
+
+
+def predict(images, model_name, classes=None):
     fine_tuner = FineTuner('inception_v3')
     path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -410,16 +421,21 @@ def predict(images, model_name):
     path_to_weight_fine_tune = settings.path_to_weight_fine_tune
     target_size = settings.target_size
 
+    results = []
     for image in images:
         path_to_image = os.path.join(path_to_this_dir, image)
         print('path_to_image: {0}'.format(path_to_image))
-        results = fine_tuner.predict(
+        result = fine_tuner.predict(
             path_to_image, target_size, num_class, path_to_weight_fine_tune)
-        print(results)
+
+        if classes is not None:
+            result = prediction_to_label(result, classes)
+
+        results.append(result)
+    return results
 
 
 def main():
-    import argparse
     parser = argparse.ArgumentParser(description="keras fine tuner")
     parser.add_argument(
         '--model',
