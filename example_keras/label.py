@@ -1,18 +1,10 @@
 from . import category
 import copy
-import errno
 import json
 import os
 import random
 import shutil
-
-
-def _make_directory(path):
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+import util
 
 
 class LabelMaker(object):
@@ -40,7 +32,7 @@ class LabelMaker(object):
         if len(paths) > self.max_num_image_per_class:
             paths = paths
 
-        _make_directory(path_to_dir)
+        util.make_directory(path_to_dir)
         for path in paths:
             name = os.path.basename(path)
             filename = '{0:06d}_{1}_{2}'.format(count, prefix, name)
