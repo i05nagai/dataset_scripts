@@ -2,4 +2,5 @@ requests
 scrapy
 pillow
 keras
+h5py
 yaml

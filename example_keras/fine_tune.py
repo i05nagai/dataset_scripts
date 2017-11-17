@@ -1,20 +1,95 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from keras.applications.vgg16 import preprocess_input
 from keras.preprocessing import image
 from keras.utils.np_utils import to_categorical
-import argparse
-import keras
-import keras.applications.vgg16 as vgg16
-import keras.applications.resnet50 as resnet50
 # import keras.applications.inception_resnet_v2 as inception_resnet_v2
+import keras
 import keras.applications.inception_v3 as inception_v3
+import keras.applications.resnet50 as resnet50
+import keras.applications.vgg16 as vgg16
 import keras.layers as layers
 import math
-import numpy as np
 import os
+import numpy as np
 import util
-import settings
+import re
+
+
+class FineTunerPath(object):
+    """FineTunerPath
+
+    path_to_dir
+    - train
+    -- img.jpg
+    - validation
+    -- img.jpg
+
+    """
+
+    TRAIN = 'train'
+    VALIDATION = 'validation'
+    HISTORY = 'history'
+    WEIGHT = 'weight'
+    FEATURE = 'feature'
+
+    def __init__(self, path_to_dir):
+        self.path_to_dir = path_to_dir
+        # train/validation
+        self.train = os.path.join(path_to_dir, self.TRAIN)
+        self.validation = os.path.join(path_to_dir, self.VALIDATION)
+        # feature
+        path_to_feature = os.path.join(path_to_dir, self.FEATURE)
+        self.feature_bottleneck_train = os.path.join(
+            path_to_feature, 'bottleneck_train.npy')
+        self.feature_bottleneck_validation = os.path.join(
+            path_to_feature, 'bottleneck_validation.npy')
+        # weight
+        path_to_weight = os.path.join(path_to_dir, self.WEIGHT)
+        self.weight_fc_layer = os.path.join(
+            path_to_weight, 'fc_layer.h5')
+        self.weight_fine_tuned = os.path.join(
+            path_to_weight, 'fine_tuned.h5')
+        # history
+        path_to_history = os.path.join(path_to_dir, self.HISTORY)
+        self.history_fc_layer = os.path.join(
+            path_to_history, 'fc_layer.txt')
+        self.history_fine_tuned = os.path.join(
+            path_to_history, 'fine_tuned.txt')
+        # make directory
+        util.make_directory(path_to_feature)
+        util.make_directory(path_to_weight)
+        util.make_directory(path_to_history)
+
+    def _path_rename(self, model_name):
+        date_str = util.current_datetime_str()
+        prefix = '{0}_{1}'.format(date_str, model_name)
+
+        rename_list = [
+            'feature_bottleneck_train',
+            'feature_bottleneck_validation',
+            'history_fc_layer',
+            'history_fine_tuned',
+            'weight_fc_layer',
+            'weight_fine_tuned',
+        ]
+        for var_name in rename_list:
+            var = getattr(self, var_name)
+            setattr(self, var_name, util.add_prefix(var, prefix))
+
+    def get_latest_weight(self, model_name):
+        path_to_weight = os.path.join(self.path_to_dir, self.WEIGHT)
+        files = util.get_files(path_to_weight)
+
+        date_str = r'(\d\d_){6}'
+        filename = 'weight_fine_tuned.h5'
+        pattern = '{0}{1}_{2}.h5'.format(date_str, model_name, filename)
+        for fname in sorted(files, reverse=True):
+            if re.match(pattern, fname):
+                return os.path.join(path_to_weight, fname)
+        # not found weight file
+        raise ValueError('Weight file is not found')
 
 
 def _resnet50_top_fully_connected_layers(num_class, input_shape):
@@ -29,7 +104,7 @@ def _vgg16_top_fully_connected_layers(num_class, input_shape):
     top_model.add(layers.Flatten(input_shape=input_shape))
     top_model.add(layers.Dense(256, activation='relu'))
     top_model.add(layers.Dropout(0.5))
-    top_model.add(layers.Dense(num_class, activation='sigmoid'))
+    top_model.add(layers.Dense(num_class, activation='sigmoid', name='fc'))
     return top_model
 
 
@@ -73,7 +148,7 @@ def directory_iterator(
         batch_size=batch_size,
         color_mode='rgb',
         classes=classes,
-        class_mode='categorical',
+        class_mode='binary',
         shuffle=shuffle)
     return dir_iter
 
@@ -84,19 +159,19 @@ class FineTuner(object):
         if model_name == 'resnet50':
             self.model = resnet50.ResNet50
             self.top_model = _resnet50_top_fully_connected_layers
-            self.num_trainable_layers = 173
+            self.num_fixed_layers = 173
         elif model_name == 'inception_resnet_v2':
             # self.model = inception_resnet_v2.InceptionResNetV2
             self.top_model = _inception_resnet_v2_top_fully_connected_layers
-            self.num_trainable_layers = 310
+            self.num_fixed_layers = 310
         elif model_name == 'inception_v3':
             self.model = inception_v3.InceptionV3
             self.top_model = _inception_v3_top_fully_connected_layers
-            self.num_trainable_layers = 310
+            self.num_fixed_layers = 310
         else:
             self.model = vgg16.VGG16
             self.top_model = _vgg16_top_fully_connected_layers
-            self.num_trainable_layers = 15
+            self.num_fixed_layers = 15
         self.model_name = model_name
 
     def combined_model(
@@ -119,7 +194,7 @@ class FineTuner(object):
         # load weights for fc layer
         if path_to_weight_fc_layer is not None:
             top_model.load_weights(path_to_weight_fc_layer)
-        # combine vgg16 and our models
+        # combine our models
         # https://github.com/fchollet/keras/issues/4040
         model_trained = keras.engine.training.Model(
             inputs=model.input, outputs=top_model(model.output))
@@ -134,14 +209,7 @@ class FineTuner(object):
         return model_trained
 
     def save_bottleneck_features(
-            self,
-            path_to_image_train,
-            path_to_bottleneck_feature_train,
-            path_to_image_validation,
-            path_to_bottleneck_feature_validation,
-            classes,
-            target_size,
-            batch_size):
+            self, ft_path, classes, target_size, batch_size):
         """
         Input images
         and save bottleneck features
@@ -151,7 +219,7 @@ class FineTuner(object):
         model = self.model(include_top=False, weights='imagenet')
 
         dir_iter = directory_iterator(
-            path_to_image_train, target_size, classes, batch_size, False)
+            ft_path.train, target_size, classes, batch_size, False)
         print('dir_iter.classes: {0}'.format(dir_iter.classes))
         # save bottoleneck feature for validation data
         num_samples_train = math.ceil(len(dir_iter.classes) / batch_size)
@@ -159,11 +227,11 @@ class FineTuner(object):
             dir_iter, num_samples_train)
         print('bottleneck_features_train.shape: {0}'.format(
             bottleneck_features_train.shape))
-        np.save(path_to_bottleneck_feature_train, bottleneck_features_train)
+        np.save(ft_path.feature_bottleneck_train, bottleneck_features_train)
 
         # data augmentation for image
         dir_iter = directory_iterator(
-            path_to_image_validation, target_size, classes, batch_size, False)
+            ft_path.validation, target_size, classes, batch_size, False)
         # save bottoleneck feature for validation data
         num_samples_validation = math.ceil(len(dir_iter.classes) / batch_size)
         bottleneck_features_validation = model.predict_generator(
@@ -171,44 +239,34 @@ class FineTuner(object):
         print('bottleneck_features_validation.shape: {0}'.format(
             bottleneck_features_validation.shape))
         np.save(
-            path_to_bottleneck_feature_validation,
+            ft_path.feature_bottleneck_validation,
             bottleneck_features_validation)
 
     def train_top_model(
-            self,
-            epochs,
-            path_to_train,
-            path_to_image_train,
-            path_to_validation,
-            path_to_image_validation,
-            batch_size,
-            classes,
-            target_size,
-            path_to_weight=None,
-            path_to_history=None):
+            self, ft_path, epochs, batch_size, classes, target_size):
         """
         Train fully connected layers by bottlenec features
         """
         num_class = len(classes)
         # load train data
-        data_train = np.load(path_to_train)
+        data_train = np.load(ft_path.feature_bottleneck_train)
         print('data_train.shape: {0}'.format(data_train.shape))
 
         model = self.top_model(num_class, data_train.shape[1:])
-        model.compile(loss='categorical_crossentropy',
+        model.compile(loss='binary_crossentropy',
                       optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
                       metrics=['accuracy'])
 
         # gen labels
         dir_iter = directory_iterator(
-            path_to_image_train, target_size, classes, batch_size, False)
+            ft_path.train, target_size, classes, batch_size, False)
         labels_train = to_categorical(dir_iter.classes)
         dir_iter = directory_iterator(
-            path_to_image_validation, target_size, classes, batch_size, False)
+            ft_path.validation, target_size, classes, batch_size, False)
         labels_validation = to_categorical(dir_iter.classes)
 
         # load validation data
-        data_validation = np.load(path_to_validation)
+        data_validation = np.load(ft_path.feature_bottleneck_validation)
         print('data_validation.shape: {0}'.format(data_validation.shape))
         history = model.fit(data_train,
                             labels_train,
@@ -216,36 +274,26 @@ class FineTuner(object):
                             batch_size=batch_size,
                             validation_data=(data_validation, labels_validation))
 
-        if path_to_weight is not None:
-            model.save_weights(path_to_weight)
-        if path_to_history is not None:
-            util.save_history(history, path_to_history)
+        model.save_weights(ft_path.weight_fc_layer)
+        util.save_history(history, ft_path.history_fc_layer)
 
     def fine_tune(
             self,
-            path_to_weight_fc_layer,
+            ft_path,
             target_size,
             classes,
             epochs,
             batch_size,
-            path_to_image_train,
-            path_to_image_validation,
             steps_per_epoch_train=None,
-            steps_per_epoch_validation=None,
-            path_to_weight_fine_tune=None,
-            path_to_history_fine_tune=None):
+            steps_per_epoch_validation=None):
         num_class = len(classes)
         model = self.combined_model(
             target_size,
             num_class,
-            path_to_weight_fc_layer,
+            ft_path.weight_fc_layer,
             None)
 
-        # show layers
-        for i in range(len(model.layers)):
-            print(i, model.layers[i])
-
-        for layer in model.layers[:self.num_trainable_layers]:
+        for layer in model.layers[:self.num_fixed_layers]:
             layer.trainable = False
 
         model.compile(loss='binary_crossentropy',
@@ -253,9 +301,9 @@ class FineTuner(object):
                       metrics=['accuracy'])
 
         dir_iter_train = directory_iterator(
-            path_to_image_train, target_size, classes, batch_size, True)
+            ft_path.train, target_size, classes, batch_size, True)
         dir_iter_validation = directory_iterator(
-            path_to_image_validation, target_size, classes, batch_size, True)
+            ft_path.validation, target_size, classes, batch_size, True)
 
         if steps_per_epoch_train is None:
             steps_per_epoch_train = len(dir_iter_train.classes) / batch_size
@@ -271,188 +319,29 @@ class FineTuner(object):
             validation_data=dir_iter_validation,
             validation_steps=steps_per_epoch_validation)
 
-        if path_to_weight_fine_tune is not None:
-            model.save_weights(path_to_weight_fine_tune)
-        if path_to_history_fine_tune is not None:
-            util.save_history(history, path_to_history_fine_tune)
+        model.save_weights(ft_path.weight_fine_tuned)
+        util.save_history(history, ft_path.history_fine_tuned)
 
-    def _path_rename(
-            self,
-            path_to_bottleneck_feature_train,
-            path_to_bottleneck_feature_validation,
-            path_to_weight_fc_layer,
-            path_to_history_fc_layer,
-            path_to_weight_fine_tune,
-            path_to_history_fine_tune):
-        date_str = util.current_datetime_str()
-        prefix = '{0}_{1}'.format(date_str, self.model_name)
-
-        return (
-            util.add_prefix(path_to_bottleneck_feature_train, prefix),
-            util.add_prefix(path_to_bottleneck_feature_validation, prefix),
-            util.add_prefix(path_to_weight_fc_layer, prefix),
-            util.add_prefix(path_to_history_fc_layer, prefix),
-            util.add_prefix(path_to_weight_fine_tune, prefix),
-            util.add_prefix(path_to_history_fine_tune, prefix),
-        )
-
-    def train(self,
-              path_to_image_train,
-              path_to_bottleneck_feature_train,
-              path_to_image_validation,
-              path_to_bottleneck_feature_validation,
-              classes,
-              target_size,
-              batch_size,
-              path_to_weight_fc_layer,
-              path_to_history_fc_layer,
-              path_to_weight_fine_tune,
-              path_to_history_fine_tune,
-              epochs):
-
-        (path_to_bottleneck_feature_train,
-         path_to_bottleneck_feature_validation,
-         path_to_weight_fc_layer,
-         path_to_history_fc_layer,
-         path_to_weight_fine_tune,
-         path_to_history_fine_tune) = self._path_rename(
-             path_to_bottleneck_feature_train,
-             path_to_bottleneck_feature_validation,
-             path_to_weight_fc_layer,
-             path_to_history_fc_layer,
-             path_to_weight_fine_tune,
-             path_to_history_fine_tune)
+    def train(self, ft_path, classes, target_size, batch_size, epochs):
 
         self.save_bottleneck_features(
-            path_to_image_train,
-            path_to_bottleneck_feature_train,
-            path_to_image_validation,
-            path_to_bottleneck_feature_validation,
-            classes,
-            target_size,
-            batch_size)
+            ft_path, classes, target_size, batch_size)
         print('bottleneck features are saved')
 
         self.train_top_model(
-            epochs,
-            path_to_bottleneck_feature_train,
-            path_to_image_train,
-            path_to_bottleneck_feature_validation,
-            path_to_image_validation,
-            batch_size,
-            classes,
-            target_size,
-            path_to_weight=path_to_weight_fc_layer,
-            path_to_history=path_to_history_fc_layer)
+            ft_path, epochs, batch_size, classes, target_size)
         print('top model are trained')
 
         self.fine_tune(
-            path_to_weight_fc_layer,
-            target_size,
-            classes,
-            epochs,
-            batch_size,
-            path_to_image_train,
-            path_to_image_validation,
-            path_to_weight_fine_tune=path_to_weight_fine_tune,
-            path_to_history_fine_tune=path_to_history_fine_tune)
+            ft_path, target_size, classes, epochs, batch_size)
 
     def predict(
-            self,
-            path_to_image,
-            target_size,
-            num_class,
-            path_to_weight_fine_tune):
+            self, path_to_image, target_size, num_class, ft_path):
         xs = util.load_single_image(path_to_image, target_size)
+        xs = preprocess_input(xs)
         model = self.combined_model(
             target_size,
             num_class,
             path_to_weight_fc_layer=None,
-            path_to_weight_fine_tune=path_to_weight_fine_tune)
+            path_to_weight_fine_tune=ft_path.weight_fine_tuned)
         return model.predict(xs)
-
-
-def train(model_name):
-    # paths
-    path_to_image_train = settings.path_to_image_train
-    path_to_bottleneck_feature_train = settings.path_to_bottleneck_feature_train
-    path_to_image_validation = settings.path_to_image_validation
-    path_to_bottleneck_feature_validation = settings.path_to_bottleneck_feature_validation
-    batch_size = settings.batch_size
-    target_size = settings.target_size
-    classes = settings.categories
-    path_to_weight_fc_layer = settings.path_to_weight_fc_layer
-    path_to_history_fc_layer = settings.path_to_history_fc_layer
-    epochs = settings.epochs
-    path_to_weight_fine_tune = settings.path_to_weight_fine_tune
-    path_to_history_fine_tune = settings.path_to_history_fine_tune
-
-    fine_tuner = FineTuner(model_name)
-    fine_tuner.train(
-        path_to_image_train,
-        path_to_bottleneck_feature_train,
-        path_to_image_validation,
-        path_to_bottleneck_feature_validation,
-        classes,
-        target_size,
-        batch_size,
-        path_to_weight_fc_layer,
-        path_to_history_fc_layer,
-        path_to_weight_fine_tune,
-        path_to_history_fine_tune,
-        epochs)
-
-
-def predict(images, model_name, classes=None):
-    fine_tuner = FineTuner(model_name)
-    path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
-
-    num_class = len(settings.categories)
-    path_to_weight_fine_tune = settings.path_to_weight_fine_tune
-    target_size = settings.target_size
-
-    results = []
-    for image in images:
-        path_to_image = os.path.join(path_to_this_dir, image)
-        print('path_to_image: {0}'.format(path_to_image))
-        result = fine_tuner.predict(
-            path_to_image, target_size, num_class, path_to_weight_fine_tune)
-
-        if classes is not None:
-            result = util.prediction_to_label(result, classes)
-
-        results.append(result)
-    return results
-
-
-def main():
-    parser = argparse.ArgumentParser(description="keras fine tuner")
-    parser.add_argument(
-        '--model',
-        type=str,
-        choices=['vgg16', 'inception_v3', 'resnet50'],
-        default='indeption_v3',
-        help='help message of this argument')
-    parser.add_argument(
-        '--train',
-        action='store_true',
-        default=False,
-        help='train or not')
-    parser.add_argument(
-        '--predict',
-        metavar="PATH_TO_IMAGE",
-        type=str,
-        nargs='+',
-        help='specify path to image')
-    args = parser.parse_args()
-
-    model_name = args.model
-    if args.train:
-        train(model_name)
-    elif args.predict:
-        path_to_images = args.predict
-        predict(path_to_images, model_name)
-
-
-if __name__ == '__main__':
-    main()

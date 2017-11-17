@@ -58,7 +58,7 @@ def draw_image_from_array(x):
 
 def current_datetime_str():
     now = datetime.datetime.now()
-    date_string = now.strftime('%Y_%m_%d_%h_%m_%s')
+    date_string = now.strftime('%Y_%m_%d_%H_%M_%S')
     return date_string
 
 

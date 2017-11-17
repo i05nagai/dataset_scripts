@@ -33,7 +33,7 @@ def read_labels(path=PATH_TO_CONFIG, sort=True):
 target_size = (224, 224)
 batch_size = 16
 categories = read_labels()
-epochs = 50
+epochs = 2
 
 # path
 path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
