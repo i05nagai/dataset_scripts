@@ -1,8 +1,8 @@
+import fine_tune
+import numpy as np
 import os
-import os.path
 import settings
 import sklearn.model_selection as model_selection
-import numpy as np
 
 
 def _get_files(path):
@@ -47,7 +47,8 @@ def cross_validation(
     xs, ys = get_paths_and_labels(path_to_train, path_to_validation, classes)
     xs = np.array(xs)
     ys = np.array(ys)
-    kfold = model_selection.StratifiedKFold(n_splits=n_splits, shuffle=True)
+    kfold = model_selection.StratifiedKFold(
+        n_splits=n_splits, shuffle=True)
     for train, test in kfold.split(xs, ys):
         for x in zip(xs[train], ys[train]):
             result = model.predict(x)
@@ -55,13 +56,12 @@ def cross_validation(
 
 
 def main():
-    path_to_train = settings.path_to_image_train
-    path_to_validation = settings.path_to_image_validation
+    ft_path = fine_tune.FineTunerPath(settings.path_to_base)
     classes = settings.categories
 
     model = None
     cross_validation(
-        model, path_to_train, path_to_validation, classes, n_splits=2)
+        model, ft_path.train, ft_path.validation, classes, n_splits=2)
 
 
 if __name__ == '__main__':

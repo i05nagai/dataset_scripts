@@ -6,14 +6,6 @@ import numpy as np
 import os
 
 
-def make_directory(path):
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-
 def predict(model, x, preprocess_input, decode_predictions, top=5):
     input_img = preprocess_input(x)
     predictions = model.predict(input_img)
@@ -60,36 +52,6 @@ def current_datetime_str():
     now = datetime.datetime.now()
     date_string = now.strftime('%Y_%m_%d_%H_%M_%S')
     return date_string
-
-
-def add_prefix(path, prefix, separator='_'):
-    """add_prefix
-    Add prefix to filename
-
-    :param path:
-    :param prefix:
-    :param separator:
-    """
-    filename = os.path.basename(path)
-    filename_new = '{0}{1}{2}'.format(prefix, separator, filename)
-    dirpath = os.path.dirname(path)
-    path_new = os.path.join(dirpath, filename_new)
-    return path_new
-
-
-def add_suffix(path, suffix, separator='_'):
-    """add_suffix
-    Add suffix to filename
-
-    :param path:
-    :param suffix:
-    :param separator:
-    """
-    filename, ext = os.path.splitext(os.path.basename(path))
-    filename_new = '{0}{1}{2}.{3}'.format(filename, separator, suffix, ext)
-    dirpath = os.path.dirname(path)
-    path_new = os.path.join(dirpath, filename_new)
-    return path_new
 
 
 def prediction_to_label(result, classes):

@@ -1,8 +1,9 @@
 import argparse
-import fine_tune
-import settings
 import os
-import util
+
+from . import fine_tune
+from . import settings
+from . import util
 
 
 def predict(images, model_name, classes=None):

@@ -36,17 +36,5 @@ categories = read_labels()
 epochs = 2
 
 # path
-path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
-path_to_base = os.path.join(path_to_this_dir, 'image')
-path_to_image_train = os.path.join(path_to_base, 'train')
-path_to_image_validation = os.path.join(path_to_base, 'validation')
-path_to_bottleneck_feature_train = os.path.join(
-    path_to_base, 'train_feature.npy')
-path_to_bottleneck_feature_validation = os.path.join(
-    path_to_base, 'validation_feature.npy')
-path_to_weight_fc_layer = os.path.join(path_to_base, 'weight_fc_layer.h5')
-path_to_history_fc_layer = os.path.join(path_to_base, 'history_fc_layer.txt')
-path_to_weight_fine_tune = os.path.join(
-    path_to_base, 'train_weight_fine_tune.h5')
-path_to_history_fine_tune = os.path.join(
-    path_to_base, 'train_history_fine_tune.txt')
+path_to_dir = os.path.abspath(os.path.dirname(__file__))
+path_to_base = os.path.join(path_to_dir, 'image')

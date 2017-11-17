@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
 from keras.applications.vgg16 import preprocess_input
 from keras.preprocessing import image
 from keras.utils.np_utils import to_categorical
@@ -11,10 +12,12 @@ import keras.applications.resnet50 as resnet50
 import keras.applications.vgg16 as vgg16
 import keras.layers as layers
 import math
-import os
 import numpy as np
-import util
+import os
 import re
+
+from ..util import filesystem
+from . import util
 
 
 class FineTunerPath(object):
@@ -58,9 +61,9 @@ class FineTunerPath(object):
         self.history_fine_tuned = os.path.join(
             path_to_history, 'fine_tuned.txt')
         # make directory
-        util.make_directory(path_to_feature)
-        util.make_directory(path_to_weight)
-        util.make_directory(path_to_history)
+        filesystem.make_directory(path_to_feature)
+        filesystem.make_directory(path_to_weight)
+        filesystem.make_directory(path_to_history)
 
     def _path_rename(self, model_name):
         date_str = util.current_datetime_str()
@@ -76,20 +79,37 @@ class FineTunerPath(object):
         ]
         for var_name in rename_list:
             var = getattr(self, var_name)
-            setattr(self, var_name, util.add_prefix(var, prefix))
+            new_name = filesystem.add_prefix_to_filename(var, prefix)
+            setattr(self, var_name, new_name)
 
     def get_latest_weight(self, model_name):
+        """get_latest_weight
+        2017_11_01_08_28_17_vgg16_weight_fc_layer.h5
+        """
         path_to_weight = os.path.join(self.path_to_dir, self.WEIGHT)
-        files = util.get_files(path_to_weight)
+        files = filesystem.get_filename(path_to_weight)
 
         date_str = r'(\d\d_){6}'
-        filename = 'weight_fine_tuned.h5'
+        filename = 'fine_tuned.h5'
         pattern = '{0}{1}_{2}.h5'.format(date_str, model_name, filename)
         for fname in sorted(files, reverse=True):
+            print(fname)
             if re.match(pattern, fname):
                 return os.path.join(path_to_weight, fname)
         # not found weight file
         raise ValueError('Weight file is not found')
+
+    def get_latest_history():
+        """get_latest_history
+        2017_11_01_08_28_17_vgg16_history_fc_layer.txt
+        """
+        pass
+
+    def get_latest_feature():
+        """get_latest_feature
+        2017_11_01_08_28_17_vgg16_train_feature.npy
+        """
+        pass
 
 
 def _resnet50_top_fully_connected_layers(num_class, input_shape):
