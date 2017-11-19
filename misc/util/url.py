@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 
 
 def url_to_filename(url):
-
     url = url.replace('://', '___')
     url = url.replace('/', '_')
     return url

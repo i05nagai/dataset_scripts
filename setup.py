@@ -49,11 +49,11 @@ class PyTest(TestCommand):
         self.pudb = False
         self.quiet = False
         self.verbose = True
-        # collection:
+        self.pep8 = False
         self.doctest_modules = False
-        # for benchmarks tests
         self.bench = False
-        self.test_args = ["mafipy"]
+
+        self.test_args = ["misc"]
         self.test_suite = True
 
     def finalize_options(self):
@@ -70,6 +70,8 @@ class PyTest(TestCommand):
             self.test_args += ["--pudb"]
         if self.quiet:
             self.test_args += ["--quiet"]
+        if self.pep8:
+            self.test_args += ["--pep8"]
         if self.verbose:
             self.test_args += ["--verbose"]
         if self.doctest_modules:

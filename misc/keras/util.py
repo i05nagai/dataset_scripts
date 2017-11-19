@@ -35,19 +35,6 @@ def load_single_image(path_to_img, target_size):
     return xs
 
 
-def add_image(xs, path_to_image):
-    x = load_single_image(path_to_image)
-    # (samples, rows, cols, channels)
-    xs = np.append(xs, x, axis=0)
-    return xs
-
-
-def draw_image_from_array(x):
-    img = image.array_to_img(x)
-    plt.imshow(img)
-    plt.show()
-
-
 def current_datetime_str():
     now = datetime.datetime.now()
     date_string = now.strftime('%Y_%m_%d_%H_%M_%S')

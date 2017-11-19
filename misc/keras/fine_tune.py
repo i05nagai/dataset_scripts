@@ -18,6 +18,8 @@ import re
 
 from ..util import filesystem
 from . import util
+from . import util_image
+from . import directory_iterator
 
 
 class FineTunerPath(object):
@@ -84,16 +86,15 @@ class FineTunerPath(object):
 
     def get_latest_weight(self, model_name):
         """get_latest_weight
-        2017_11_01_08_28_17_vgg16_weight_fc_layer.h5
+        2017_11_01_08_28_17_vgg16_fine_tuned.h5
         """
         path_to_weight = os.path.join(self.path_to_dir, self.WEIGHT)
         files = filesystem.get_filename(path_to_weight)
 
-        date_str = r'(\d\d_){6}'
+        date_str = r'\d{4}_(\d\d_){5}'
         filename = 'fine_tuned.h5'
-        pattern = '{0}{1}_{2}.h5'.format(date_str, model_name, filename)
+        pattern = '{0}{1}_{2}'.format(date_str, model_name, filename)
         for fname in sorted(files, reverse=True):
-            print(fname)
             if re.match(pattern, fname):
                 return os.path.join(path_to_weight, fname)
         # not found weight file
@@ -116,6 +117,12 @@ def _resnet50_top_fully_connected_layers(num_class, input_shape):
     top_model = keras.models.Sequential()
     top_model.add(layers.Flatten(input_shape=input_shape))
     top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
+
+    # maxpool = model.get_layer(name='avg_pool')
+    # shape = maxpool.output_shape[1:]
+    # dense = model.get_layer(name='fc1000')
+    # layer_utils.convert_dense_weights_data_format(
+    #     top_model, input_shape, 'channels_first')
     return top_model
 
 
@@ -144,7 +151,7 @@ def _inception_v3_top_fully_connected_layers(num_class, input_shape):
     return top_model
 
 
-def directory_iterator(
+def gen_directory_iterator(
         path_to_image,
         target_size,
         classes,
@@ -159,17 +166,33 @@ def directory_iterator(
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
-        fill_mode='nearest')
+        fill_mode='nearest',
+        preprocessing_function=util_image.preprocess_function)
 
     # data augmentation for image
-    dir_iter = generator.flow_from_directory(
+    # dir_iter = generator.flow_from_directory(
+    #     path_to_image,
+    #     target_size=target_size,
+    #     batch_size=batch_size,
+    #     color_mode='rgb',
+    #     classes=classes,
+    #     class_mode='categorical',
+    #     shuffle=shuffle)
+    dir_iter = directory_iterator.ImagenetDirectoryIterator(
         path_to_image,
+        generator,
         target_size=target_size,
-        batch_size=batch_size,
         color_mode='rgb',
         classes=classes,
-        class_mode='binary',
-        shuffle=shuffle)
+        class_mode='categorical',
+        data_format=generator.data_format,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        seed=None,
+        save_to_dir=None,
+        save_prefix='',
+        save_format='png',
+        follow_links=False)
     return dir_iter
 
 
@@ -238,7 +261,7 @@ class FineTuner(object):
         # exclude fully connected layers
         model = self.model(include_top=False, weights='imagenet')
 
-        dir_iter = directory_iterator(
+        dir_iter = gen_directory_iterator(
             ft_path.train, target_size, classes, batch_size, False)
         print('dir_iter.classes: {0}'.format(dir_iter.classes))
         # save bottoleneck feature for validation data
@@ -250,7 +273,7 @@ class FineTuner(object):
         np.save(ft_path.feature_bottleneck_train, bottleneck_features_train)
 
         # data augmentation for image
-        dir_iter = directory_iterator(
+        dir_iter = gen_directory_iterator(
             ft_path.validation, target_size, classes, batch_size, False)
         # save bottoleneck feature for validation data
         num_samples_validation = math.ceil(len(dir_iter.classes) / batch_size)
@@ -278,10 +301,10 @@ class FineTuner(object):
                       metrics=['accuracy'])
 
         # gen labels
-        dir_iter = directory_iterator(
+        dir_iter = gen_directory_iterator(
             ft_path.train, target_size, classes, batch_size, False)
         labels_train = to_categorical(dir_iter.classes)
-        dir_iter = directory_iterator(
+        dir_iter = gen_directory_iterator(
             ft_path.validation, target_size, classes, batch_size, False)
         labels_validation = to_categorical(dir_iter.classes)
 
@@ -320,9 +343,9 @@ class FineTuner(object):
                       optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
                       metrics=['accuracy'])
 
-        dir_iter_train = directory_iterator(
+        dir_iter_train = gen_directory_iterator(
             ft_path.train, target_size, classes, batch_size, True)
-        dir_iter_validation = directory_iterator(
+        dir_iter_validation = gen_directory_iterator(
             ft_path.validation, target_size, classes, batch_size, True)
 
         if steps_per_epoch_train is None:
@@ -356,12 +379,12 @@ class FineTuner(object):
             ft_path, target_size, classes, epochs, batch_size)
 
     def predict(
-            self, path_to_image, target_size, num_class, ft_path):
+            self, path_to_image, target_size, num_class, path_to_weight):
         xs = util.load_single_image(path_to_image, target_size)
         xs = preprocess_input(xs)
         model = self.combined_model(
             target_size,
             num_class,
             path_to_weight_fc_layer=None,
-            path_to_weight_fine_tune=ft_path.weight_fine_tuned)
+            path_to_weight_fine_tune=path_to_weight)
         return model.predict(xs)
