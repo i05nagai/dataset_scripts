@@ -21,16 +21,22 @@ def cli(debug):
 @click.option('--fine_tune', is_flag=True, default=False)
 def predict(paths, model_name, data_dir, fine_tune):
     from ..util import filesystem
+    from ..ml import score
 
     paths = list(paths)
     if data_dir is not None:
         paths += filesystem.get_filepath(data_dir)
 
+    path_csv = 'predict_result.csv'
+    path_json = 'predict_result.json'
     if fine_tune:
         classes = settings.categories
         results = predict_fine_tune(paths, model_name, classes)
-        print('paths: {0}'.format(paths))
-        write_predict_to_csv(paths, results, classes)
+        # save as csv
+        write_predict_to_csv(path_csv, paths, results, classes)
+        # save as json
+        results = score.get_top_n_prediction_from_file(path_csv, 1)
+        filesystem.save_as_json(path_json, results)
 
 
 @cli.command()
@@ -47,19 +53,17 @@ def train(model_name, data_dir, fine_tune):
         pass
 
 
-def write_predict_to_csv(xs, ys, classes):
+def write_predict_to_csv(path, xs, ys, classes):
     # header
     outputs = [
         ['path'] + [c for c in classes]
     ]
-    print(xs)
-    print(ys)
     # body
     for x, y in zip(xs, ys):
         outputs.append([x] + [y[c] for c in classes])
     try:
         # write to file
-        with open("predict_results.csv", "w") as f:
+        with open(path, "w") as f:
             writer = csv.writer(f, lineterminator='\n')
             writer.writerows(outputs)
     except IOError as e:

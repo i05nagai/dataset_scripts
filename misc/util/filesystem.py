@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import errno
 import os
+import json
 
 
 def get_filename(path_to_dir, recursive=True):
@@ -72,3 +73,8 @@ def make_directory(path):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+
+def save_as_json(path, json_dict):
+    with open(path, 'w') as f:
+        json.dump(json_dict, f, indent=2, sort_keys=True)
