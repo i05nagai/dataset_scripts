@@ -19,7 +19,7 @@ def cli(debug):
     click.echo('Debug mode is %s' % ('on' if debug else 'off'))
 
 
-@cli.command()
+@cli.command(help='Predict')
 @click.argument('paths', nargs=-1, type=tuple)
 @click.option(
     '--model_name',
@@ -47,7 +47,7 @@ def predict(paths, model_name, data_dir, fine_tune):
         filesystem.save_as_json(path_json, results)
 
 
-@cli.command()
+@cli.command(help='Train models')
 @click.option(
     '--model_name',
     type=click.Choice(MODELS),
@@ -59,6 +59,59 @@ def train(model_name, data_dir, fine_tune):
         train_fine_tune(model_name)
     else:
         pass
+
+
+@cli.command(help='Run cross validation')
+@click.option(
+    '--model_name',
+    type=click.Choice(MODELS),
+    default=DEFAULT_MODEL)
+@click.option('--data_dir')
+@click.option('--fine_tune', is_flag=True, default=False)
+def cross_validation(model_name, data_dir, fine_tune):
+    if fine_tune:
+        cross_validation_fine_tune(model_name)
+    else:
+        pass
+
+
+def cross_validation_fine_tune(model_name):
+    from . import _fine_tune
+    from . import cross_validation as cv
+    import keras.optimizers
+
+    image_data_generator = None
+    n_splits = 2
+
+    # from settings
+    classes = settings.categories
+    path_to_base = settings.path_to_base
+    target_size = settings.target_size
+    batch_size = settings.batch_size
+    steps_per_epoch = 1
+    epochs = settings.epochs
+
+    base_model = model_name
+
+    def model_creator():
+        model = _fine_tune.create_model(base_model, classes, target_size)
+        model.compile(
+            loss='categorical_crossentropy',
+            optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
+            metrics=['accuracy'])
+        return model
+
+    cv.kfold_from_directory(
+        model_creator,
+        path_to_base,
+        classes,
+        target_size=target_size,
+        data_format=None,
+        batch_size=batch_size,
+        steps_per_epoch=steps_per_epoch,
+        epochs=epochs,
+        n_splits=n_splits,
+        image_data_generator=image_data_generator)
 
 
 def write_predict_to_csv(path, xs, ys, classes):

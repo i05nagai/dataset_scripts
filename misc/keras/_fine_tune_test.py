@@ -9,11 +9,11 @@ import keras.applications.resnet50 as resnet50
 import os
 
 
-def fine_tuned_model_test():
+def create_model_test():
     base_model = 'resnet50'
-    num_classes = 2
     target_size = settings.target_size
     classes = settings.categories
+    num_classes = len(classes)
     batch_size = settings.batch_size
     epochs = 1
     steps_per_epoch = 1

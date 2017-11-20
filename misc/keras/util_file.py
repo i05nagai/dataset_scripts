@@ -1,6 +1,6 @@
-import re
-import os
 from ..util import filesystem
+import os
+import re
 
 
 def get_latest_weight(path_to_dir, model_name, basename):
@@ -50,7 +50,7 @@ def get_labels(paths, classes):
     return labels
 
 
-def get_paths_and_labels(path_to_base, path_to_validation, classes):
+def get_paths_and_labels(path_to_base, classes):
     """get_paths_and_labels
     Get paths to images and class labels assumed when we use ImageDataGenerator
 

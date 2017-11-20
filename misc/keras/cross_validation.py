@@ -66,8 +66,14 @@ def kfold_from_directory(
         data_format=None,
         batch_size=32,
         steps_per_epoch=1,
+        epochs=1,
         n_splits=2,
         image_data_generator=None):
+    """kfold_from_directory
+
+    :param model_creator: return compiled model.
+    :param type: function
+    """
     if data_format is None:
         data_format = K.image_data_format()
 
@@ -84,6 +90,6 @@ def kfold_from_directory(
         kfold,
         batch_size,
         steps_per_epoch,
-        n_splits,
-        target_size)
+        epochs,
+        image_data_generator=image_data_generator)
     return histories
