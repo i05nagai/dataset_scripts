@@ -13,6 +13,8 @@ def write_predict_to_csv(xs, ys, classes):
     outputs = [
         ['path'] + [c for c in classes]
     ]
+    print(xs)
+    print(ys)
     # body
     for x, y in zip(xs, ys):
         outputs.append([x] + [y[c] for c in classes])
@@ -37,8 +39,7 @@ def predict_fine_tune(paths, model_name, classes=None):
         target_size,
         path_to_base)
 
-    import pprint
-    pprint.pprint(results)
+    return results
 
 
 def train_fine_tune(model_name):
@@ -110,6 +111,8 @@ def main():
         paths = args.predict
         classes = settings.categories
         results = predict_fine_tune(paths, model_name, classes)
+        print('paths: {0}'.format(paths))
+        print('results: {0}'.format(results))
         write_predict_to_csv(paths, results, classes)
     classes = settings.categories
 
