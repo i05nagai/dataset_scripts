@@ -6,6 +6,8 @@
 # python
 __pycache__
 *.pyc
+.coverage
+.cache
 # images
 *.jpg
 *.png
