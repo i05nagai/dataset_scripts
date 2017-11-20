@@ -1,11 +1,44 @@
-import argparse
 import os
-import keras.applications.resnet50 as resnet50
 import csv
 
-from . import fine_tune
 from . import settings
-from . import util_image
+import click
+
+
+@click.group()
+@click.option('--debug/--no-debug', default=False)
+def cli(debug):
+    click.echo('Debug mode is %s' % ('on' if debug else 'off'))
+
+
+@cli.command()
+@click.argument('paths', nargs=-1)
+@click.option(
+    '--model_name',
+    type=click.Choice(['resnet50', 'vgg16', 'inception_v3']),
+    default='resnet50')
+@click.option('--data_dir', type=str)
+@click.option('--fine_tune', is_flag=True, default=False)
+def predict(paths, model_name, data_dir, fine_tune):
+    if fine_tune:
+        classes = settings.categories
+        results = predict_fine_tune(paths, model_name, classes)
+        print('paths: {0}'.format(paths))
+        write_predict_to_csv(paths, results, classes)
+
+
+@cli.command()
+@click.option(
+    '--model_name',
+    type=click.Choice(['resnet50', 'vgg16', 'inception_v3']),
+    default='resnet50')
+@click.option('--data_dir')
+@click.option('--fine_tune', default=False)
+def train(model_name, data_dir, fine_tune):
+    if fine_tune:
+        train_fine_tune(model_name)
+    else:
+        pass
 
 
 def write_predict_to_csv(xs, ys, classes):
@@ -28,6 +61,7 @@ def write_predict_to_csv(xs, ys, classes):
 
 
 def predict_fine_tune(paths, model_name, classes=None):
+    from . import fine_tune
     classes = settings.categories
     target_size = settings.target_size
     path_to_base = settings.path_to_base
@@ -43,6 +77,7 @@ def predict_fine_tune(paths, model_name, classes=None):
 
 
 def train_fine_tune(model_name):
+    from . import fine_tune
     path_to_base = settings.path_to_base
     classes = settings.categories
     batch_size = settings.batch_size
@@ -58,7 +93,9 @@ def train_fine_tune(model_name):
         path_to_base)
 
 
-def predict(paths, model_name, classes=None):
+def predict_normal(paths, model_name, classes=None):
+    import keras.applications.resnet50 as resnet50
+    from . import util_image
     path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
 
     model = resnet50.ResNet50()
@@ -79,42 +116,11 @@ def predict(paths, model_name, classes=None):
 
 
 def main():
-    # fine tune modelのtrainingとprediction
-    # fine tuneじゃないmodelのtrainとprediction
-    # fine tuneのmodelのcross validationをしたい
-    # 両方のmodelのclassify_directoryをしたい
-    parser = argparse.ArgumentParser(description="keras fine tuner")
-    parser.add_argument(
-        '--model',
-        type=str,
-        choices=['vgg16', 'inception_v3', 'resnet50'],
-        default='indeption_v3',
-        help='help message of this argument')
-    parser.add_argument(
-        '--train',
-        action='store_true',
-        default=False,
-        help='Train by fine tuning')
-    parser.add_argument(
-        '--predict',
-        metavar="PATH_TO_IMAGES",
-        type=str,
-        nargs='+',
-        help='path to images which you want to predict')
-    args = parser.parse_args()
-
-    model_name = args.model
-
-    if args.train:
-        train_fine_tune(model_name)
-    else:
-        paths = args.predict
-        classes = settings.categories
-        results = predict_fine_tune(paths, model_name, classes)
-        print('paths: {0}'.format(paths))
-        print('results: {0}'.format(results))
-        write_predict_to_csv(paths, results, classes)
-    classes = settings.categories
+    # fine tune model training and rediction
+    # not fine tune model, trainining and prediction
+    # fine tune model cross validationを
+    # both model classify_directory
+    cli()
 
 
 if __name__ == '__main__':
