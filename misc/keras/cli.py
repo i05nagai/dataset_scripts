@@ -12,7 +12,7 @@ def cli(debug):
 
 
 @cli.command()
-@click.argument('paths', nargs=-1)
+@click.argument('paths', nargs=-1, type=tuple)
 @click.option(
     '--model_name',
     type=click.Choice(['resnet50', 'vgg16', 'inception_v3']),
@@ -20,6 +20,12 @@ def cli(debug):
 @click.option('--data_dir', type=str)
 @click.option('--fine_tune', is_flag=True, default=False)
 def predict(paths, model_name, data_dir, fine_tune):
+    from ..util import filesystem
+
+    paths = list(paths)
+    if data_dir is not None:
+        paths += filesystem.get_filepath(data_dir)
+
     if fine_tune:
         classes = settings.categories
         results = predict_fine_tune(paths, model_name, classes)
