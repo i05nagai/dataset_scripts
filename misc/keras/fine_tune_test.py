@@ -54,5 +54,6 @@ def predict_test():
             result = util.prediction_to_label(result, classes)
 
         results.append(result)
-    print(results)
-    return results
+    import pprint
+    pprint.pprint(results)
+    assert False
