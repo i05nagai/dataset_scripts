@@ -27,7 +27,8 @@ def load_single_image(path_to_img, target_size):
     return xs
 
 
-def load_imgs(paths, target_size, data_format, color_mode='rgb'):
+def load_imgs(
+        paths, target_size, data_format='channels_last', color_mode='rgb'):
     image_shape = get_image_shape(target_size, data_format, color_mode)
     xs = np.zeros((len(paths),) + image_shape, dtype=K.floatx())
     print('paths: {0}'.format(paths))

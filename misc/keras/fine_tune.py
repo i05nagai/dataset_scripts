@@ -379,12 +379,56 @@ class FineTuner(object):
             ft_path, target_size, classes, epochs, batch_size)
 
     def predict(
-            self, path_to_image, target_size, num_class, path_to_weight):
-        xs = util.load_single_image(path_to_image, target_size)
-        xs = preprocess_input(xs)
+            self, paths, target_size, num_class, path_to_weight):
+        xs = util_image.load_imgs(paths, target_size)
+        for i, x in enumerate(xs):
+            xs[i] = preprocess_input(x)
         model = self.combined_model(
             target_size,
             num_class,
             path_to_weight_fc_layer=None,
             path_to_weight_fine_tune=path_to_weight)
         return model.predict(xs)
+
+
+def train_test(
+        model_name,
+        classes,
+        batch_size,
+        target_size,
+        epochs,
+        path_to_base):
+    ft_path = FineTunerPath(path_to_base)
+    ft_path._path_rename(model_name)
+
+    fine_tuner = FineTuner(model_name)
+    fine_tuner.train(
+        ft_path,
+        classes,
+        target_size,
+        batch_size,
+        epochs)
+
+
+def predict(
+        paths,
+        model_name,
+        classes,
+        target_size,
+        path_to_base):
+    path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
+    paths = [os.path.join(path_to_this_dir, path) for path in paths]
+
+    fine_tuner = FineTuner(model_name)
+    num_class = len(classes)
+    ft_path = FineTunerPath(path_to_base)
+    path_to_weight_fine_tune = ft_path.get_latest_weight(model_name)
+    print('path_to_weight_fine_tune: {0}'.format(path_to_weight_fine_tune))
+
+    result = fine_tuner.predict(
+        paths, target_size, num_class, path_to_weight_fine_tune)
+
+    if classes is not None:
+        result = util.prediction_to_label(result, classes)
+
+    return result
