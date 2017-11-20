@@ -21,9 +21,9 @@ def classify_directory_test():
         model,
         path_to_test,
         classes,
-        target_size,
-        data_format,
-        color_mode,
-        util_image.preprocess_function)
+        target_size=target_size,
+        data_format=data_format,
+        color_mode=color_mode,
+        preprocess_function=util_image.preprocess_function)
     print(results)
     assert False
