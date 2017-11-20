@@ -18,6 +18,7 @@ import re
 
 from ..util import filesystem
 from . import util
+from . import util_file
 from . import util_image
 from . import directory_iterator
 
@@ -33,8 +34,6 @@ class FineTunerPath(object):
 
     """
 
-    TRAIN = 'train'
-    VALIDATION = 'validation'
     HISTORY = 'history'
     WEIGHT = 'weight'
     FEATURE = 'feature'
@@ -42,8 +41,9 @@ class FineTunerPath(object):
     def __init__(self, path_to_dir):
         self.path_to_dir = path_to_dir
         # train/validation
-        self.train = os.path.join(path_to_dir, self.TRAIN)
-        self.validation = os.path.join(path_to_dir, self.VALIDATION)
+        paths = util_file.get_path_train_and_validation(path_to_dir)
+        self.train = paths[0]
+        self.validation = paths[1]
         # feature
         path_to_feature = os.path.join(path_to_dir, self.FEATURE)
         self.feature_bottleneck_train = os.path.join(
@@ -391,7 +391,7 @@ class FineTuner(object):
         return model.predict(xs)
 
 
-def train_test(
+def train(
         model_name,
         classes,
         batch_size,
