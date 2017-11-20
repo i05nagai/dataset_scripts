@@ -1,9 +1,6 @@
 import datetime
-import errno
 import keras.preprocessing.image as image
-import matplotlib.pyplot as plt
 import numpy as np
-import os
 
 
 def predict(model, x, preprocess_input, decode_predictions, top=5):

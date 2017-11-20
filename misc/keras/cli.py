@@ -61,7 +61,6 @@ def predict(paths, model_name, classes=None):
         x = util_image.load_single_image(path_to_image, target_size)
         x = resnet50.preprocess_input(x)
         y = model.predict(x)
-        result = y
         # result = resnet50.decode_predictions(y, top=5)
 
         results.append(result)

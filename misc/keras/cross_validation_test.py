@@ -17,12 +17,11 @@ def validate_test():
     model = fine_tune.FineTuner(model_name)
     target_size = settings.target_size
 
-    h = cv.validate(
-        model,
-        ft_path.train,
-        ft_path.validation,
-        classes,
-        n_splits,
-        target_size,
-    )
-    print(h)
+    #h = cv.validate(
+    #    model,
+    #    ft_path.train,
+    #    ft_path.validation,
+    #    classes,
+    #    n_splits,
+    #    target_size)
+    #print(h)

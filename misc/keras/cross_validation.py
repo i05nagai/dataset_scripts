@@ -35,36 +35,45 @@ def get_paths_and_labels(path_to_train, path_to_validation, classes):
     return paths, labels
 
 
-class Report(object):
-
-    def __init__(self, num_cross_validation, loss_functions):
-        self.num = [0] * num_cross_validation
-        self.num_true = [0] * num_cross_validation
-        self.num_loss = [0.0] * num_cross_validation
-        self.loss_functions = loss_functions
-
-    def add(self, num_try, predict, output):
-        pass
-
-
 class CrossValidator(object):
 
     def __init__(self, kfold, loss, image_data_generator=None):
         self.kfold = kfold
         self.image_data_generator = image_data_generator
+        self.histories = []
 
-    def _train(self, xs, target_size, data_format):
+    def _train(self,
+               model,
+               xs_train, ys_train,
+               xs_validation, ys_validation,
+               batch_size,
+               steps_per_epoch,
+               epochs):
         # train
-        x = util_image.load_imgs(xs[train], target_size, data_format)
-        # train
-        array_iter = self.image_data_generator.flow(
-            x, ys[train],
+        iter_train = self.image_data_generator.flow(
+            xs_train, ys_train,
             batch_size=batch_size,
             shuffle=False,
             seed=None)
-
-    def _evaluate(self):
-        pass
+        # validation
+        iter_validation = self.image_data_generator.flow(
+            xs_validation, ys_validation,
+            batch_size=batch_size,
+            shuffle=False,
+            seed=None)
+        history = model.fit_generator(
+            iter_train,
+            steps_per_epoch,
+            epochs=epochs,
+            validation_data=iter_validation,
+            validation_steps=None,
+            class_weight=None,
+            max_queue_size=10,
+            workers=1,
+            use_multiprocessing=False,
+            shuffle=True,
+            nitial_epoch=0)
+        self.histories.append(history)
 
     def validate(self,
                  model,
@@ -72,6 +81,8 @@ class CrossValidator(object):
                  path_to_validation,
                  classes,
                  n_splits,
+                 steps_per_epoch,
+                 epochs,
                  target_size=(256, 256),
                  data_format=None,
                  batch_size=32,
@@ -86,10 +97,11 @@ class CrossValidator(object):
         ys = np.array(ys)
         # report = Report(n_splits)
 
-        num_try = 0
         for train, test in self.kfold.split(xs, ys):
-            print(train)
-            print(xs[train].shape)
-            result = model.evaluate_generator(
-                array_iter, steps)
-            result = np.argmax(result)
+            self._train(
+                model,
+                xs[train], ys[train],
+                xs[test], ys[test],
+                batch_size,
+                steps_per_epoch,
+                epochs)
