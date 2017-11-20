@@ -5,13 +5,13 @@ from . import util
 
 def _classify(
         model,
-        path,
+        paths,
         classes,
         target_size,
         data_format,
         color_mode,
         preprocess_function=None):
-    xs = util_image.load_imgs([path], target_size, data_format, color_mode)
+    xs = util_image.load_imgs(paths, target_size, data_format, color_mode)
 
     if preprocess_function is not None:
         for i, x in enumerate(xs):
@@ -35,7 +35,7 @@ def classify_directory(
     for path in filepaths:
         result = _classify(
             model,
-            path,
+            [path],
             classes,
             target_size=target_size,
             data_format=data_format,
