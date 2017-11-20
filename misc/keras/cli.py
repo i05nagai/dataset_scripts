@@ -5,6 +5,14 @@ from . import settings
 import click
 
 
+MODELS = [
+    'resnet50',
+    'vgg16',
+    'inception_v3',
+]
+DEFAULT_MODEL = 'resnet50'
+
+
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 def cli(debug):
@@ -15,8 +23,8 @@ def cli(debug):
 @click.argument('paths', nargs=-1, type=tuple)
 @click.option(
     '--model_name',
-    type=click.Choice(['resnet50', 'vgg16', 'inception_v3']),
-    default='resnet50')
+    type=click.Choice(MODELS),
+    default=DEFAULT_MODEL)
 @click.option('--data_dir', type=str)
 @click.option('--fine_tune', is_flag=True, default=False)
 def predict(paths, model_name, data_dir, fine_tune):
@@ -42,8 +50,8 @@ def predict(paths, model_name, data_dir, fine_tune):
 @cli.command()
 @click.option(
     '--model_name',
-    type=click.Choice(['resnet50', 'vgg16', 'inception_v3']),
-    default='resnet50')
+    type=click.Choice(MODELS),
+    default=DEFAULT_MODEL)
 @click.option('--data_dir')
 @click.option('--fine_tune', default=False)
 def train(model_name, data_dir, fine_tune):
