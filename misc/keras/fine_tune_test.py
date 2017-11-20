@@ -30,9 +30,13 @@ def train_test():
 
 def predict_test():
     model_name = 'resnet50'
-    paths = filesystem.get_filepath('image/validation/private')
-    classes = settings.categories
 
+    path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
+    path_to_predict = os.path.join(
+        path_to_this_dir, 'image/validation/private')
+    paths = filesystem.get_filepath(path_to_predict)
+
+    classes = settings.categories
     fine_tuner = fine_tune.FineTuner(model_name)
     path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
 
