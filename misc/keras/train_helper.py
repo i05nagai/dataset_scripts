@@ -19,9 +19,10 @@ def train_from_images():
     steps_per_epoch = 1
 
     model = _fine_tune.fine_tuned_model(base_model, num_classes, target_size)
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
-                  metrics=['accuracy'])
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
+        metrics=['accuracy'])
 
     ft_path = fine_tune.FineTunerPath(settings.path_to_base)
 

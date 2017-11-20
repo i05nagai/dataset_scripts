@@ -7,7 +7,7 @@ import os
 
 def classify_directory_test():
     path_to_dir = os.path.abspath(os.path.dirname(__file__))
-    path_to_test = os.path.join(path_to_dir, './image/test')
+    path_to_test = os.path.join(path_to_dir, './image/validation/open')
     classes = settings.categories
     target_size = settings.target_size
     data_format = 'channels_last'

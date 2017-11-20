@@ -39,20 +39,8 @@ def predict_fine_tune(paths, model_name, classes=None):
 def predict(paths, model_name, classes=None):
     path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
 
+    model = resnet50.ResNet50()
     target_size = settings.target_size
-    input_tensor = layers.Input(shape=(target_size[0], target_size[1], 3))
-    model = resnet50.ResNet50(include_top=False, input_tensor=input_tensor)
-    print(model.output_shape)
-
-    # path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
-    # path_to_weight = os.path.join(path_to_this_dir, './image/resnet50_weight.h5')
-    top_model = fine_tune._resnet50_top_fully_connected_layers(
-        1000, model.output_shape[1:])
-    model_combined = keras.engine.training.Model(
-        inputs=model.input, outputs=top_model(model.output))
-
-    path_to_weight = '/Users/makotonagai/.keras/models/resnet50_weights_tf_dim_ordering_tf_kernels.h5'
-    model_combined.load_weights(path_to_weight)
 
     results = []
     for path_to_image in paths:
@@ -61,33 +49,12 @@ def predict(paths, model_name, classes=None):
         x = util_image.load_single_image(path_to_image, target_size)
         x = resnet50.preprocess_input(x)
         y = model.predict(x)
-        # result = resnet50.decode_predictions(y, top=5)
+        result = resnet50.decode_predictions(y, top=5)
 
         results.append(result)
     import pprint
     pprint.pprint(results)
     return results
-
-
-# def predict(paths, model_name, classes=None):
-#     path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
-# 
-#     model = resnet50.ResNet50()
-#     target_size = settings.target_size
-# 
-#     results = []
-#     for path_to_image in paths:
-#         path_to_image = os.path.join(path_to_this_dir, path_to_image)
-#         print('path_to_image: {0}'.format(path_to_image))
-#         x = util_image.load_single_image(path_to_image, target_size)
-#         x = resnet50.preprocess_input(x)
-#         y = model.predict(x)
-#         result = resnet50.decode_predictions(y, top=5)
-# 
-#         results.append(result)
-#     import pprint
-#     pprint.pprint(results)
-#     return results
 
 
 def train(model_name):
