@@ -1,4 +1,5 @@
 import datetime
+import keras.backend as K
 import keras.preprocessing.image as image
 import numpy as np
 
@@ -46,3 +47,9 @@ def prediction_to_label(result, classes):
     """
 
     return [dict(zip(classes, r)) for r in result]
+
+
+def get_data_format(data_format):
+    if data_format is None:
+        return K.image_data_format()
+    return data_format

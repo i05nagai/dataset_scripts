@@ -26,4 +26,3 @@ def classify_directory_test():
         color_mode=color_mode,
         preprocess_function=util_image.preprocess_function)
     print(results)
-    assert False

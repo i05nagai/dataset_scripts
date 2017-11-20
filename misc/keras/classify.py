@@ -1,14 +1,14 @@
+from . import util
 from . import util_image
 from ..util import filesystem
-from . import util
 
 
 def _classify(
         model,
         paths,
         classes,
-        target_size,
-        data_format,
+        target_size=(256, 256),
+        data_format=None,
         color_mode='rgb',
         preprocess_function=None):
     xs = util_image.load_imgs(paths, target_size, data_format, color_mode)
@@ -26,20 +26,18 @@ def classify_directory(
         path_to_dir,
         classes,
         target_size=(256, 256),
-        data_format='channels_last',
+        data_format=None,
         color_mode='rgb',
         preprocess_function=None):
+    data_format = util.get_data_format(data_format)
     filepaths = filesystem.get_filepath(path_to_dir, recursive=False)
 
-    results = []
-    for path in filepaths:
-        result = _classify(
-            model,
-            [path],
-            classes,
-            target_size=target_size,
-            data_format=data_format,
-            color_mode=color_mode,
-            preprocess_function=preprocess_function)
-        results.append(result)
-    return results
+    result = _classify(
+        model,
+        filepaths,
+        classes,
+        target_size=target_size,
+        data_format=data_format,
+        color_mode=color_mode,
+        preprocess_function=preprocess_function)
+    return result
