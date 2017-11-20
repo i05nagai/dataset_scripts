@@ -20,8 +20,9 @@ def get_filename(path_to_dir, recursive=True):
 
 def get_filepath(path_to_dir, recursive=True):
     if not recursive:
-        # return only file name
-        return os.listdir(path_to_dir)
+        filenames = os.listdir(path_to_dir)
+        filepaths = [os.path.join(path_to_dir, name) for name in filenames]
+        return filepaths
     else:
         filepaths = []
         for root, subdirs, files in os.walk(path_to_dir):

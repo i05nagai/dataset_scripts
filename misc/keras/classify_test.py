@@ -10,7 +10,7 @@ def classify_directory_test():
     path_to_test = os.path.join(path_to_dir, './image/test')
     classes = settings.categories
     target_size = settings.target_size
-    data_format = 'channel_first'
+    data_format = 'channels_last'
     color_mode = 'rgb'
     model_name = 'resnet50'
 
@@ -18,7 +18,12 @@ def classify_directory_test():
         model_name, len(classes), target_size)
 
     results = target.classify_directory(
-        model, path_to_test, target_size,
-        data_format, color_mode, util_image.preprocess_function)
+        model,
+        path_to_test,
+        classes,
+        target_size,
+        data_format,
+        color_mode,
+        util_image.preprocess_function)
     print(results)
     assert False

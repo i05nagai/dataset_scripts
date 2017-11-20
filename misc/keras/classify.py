@@ -4,7 +4,12 @@ from . import util
 
 
 def _classify(
-        model, path, classes, target_size, data_format, color_mode,
+        model,
+        path,
+        classes,
+        target_size,
+        data_format,
+        color_mode,
         preprocess_function=None):
     xs = util_image.load_imgs([path], target_size, data_format, color_mode)
 
@@ -12,7 +17,7 @@ def _classify(
         for i, x in enumerate(xs):
             xs[i] = preprocess_function(x)
 
-    y = model.predict(xs)[0]
+    y = model.predict(xs)
     return util.prediction_to_label(y, classes)
 
 
@@ -29,7 +34,12 @@ def classify_directory(
     results = []
     for path in filepaths:
         result = _classify(
-            model, path, classes,
-            target_size, data_format, color_mode, preprocess_function)
+            model,
+            path,
+            classes,
+            target_size=target_size,
+            data_format=data_format,
+            color_mode=color_mode,
+            preprocess_function=preprocess_function)
         results.append(result)
-    return result
+    return results
