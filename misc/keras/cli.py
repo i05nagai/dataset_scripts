@@ -3,6 +3,7 @@ import os
 import keras.applications.resnet50 as resnet50
 import keras.engine.training
 import keras.layers as layers
+import csv
 
 from . import fine_tune
 from . import settings
@@ -52,8 +53,7 @@ def predict(paths, model_name, classes=None):
         result = resnet50.decode_predictions(y, top=5)
 
         results.append(result)
-    import pprint
-    pprint.pprint(results)
+
     return results
 
 
@@ -105,7 +105,22 @@ def main():
         train(model_name)
     else:
         images = args.predict
-        predict(images, model_name)
+        results = predict(images, model_name)
+        try:
+            classes = settings.categories
+            # header
+            outputs = [
+                ['path'] + [c for c in classes]
+            ]
+            # body
+            for image, result in zip(images, results):
+                outputs.append([image] + [result[c] for c in classes])
+            # write to file
+            with open("predict_results.csv", "w") as f:
+                writer = csv.writer(f, lineterminator='\n')
+                writer.writerows(outputs)
+        except IOError as e:
+            print(e)
 
 
 if __name__ == '__main__':
