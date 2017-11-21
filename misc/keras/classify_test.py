@@ -1,5 +1,5 @@
 from . import classify as target
-from . import _fine_tune
+from . import model_helper
 from . import util_image
 from . import settings
 import os
@@ -14,7 +14,7 @@ def classify_directory_test():
     color_mode = 'rgb'
     model_name = 'resnet50'
 
-    model = _fine_tune.fine_tuned_model(
+    model = model_helper.create_model(
         model_name, len(classes), target_size)
 
     results = target.classify_directory(

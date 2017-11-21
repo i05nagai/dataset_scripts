@@ -3,6 +3,8 @@ import numpy as np
 import keras.backend as K
 import keras.preprocessing.image as image
 
+from . import util
+
 
 def get_image_shape(target_size, data_format, color_mode='rgb'):
     if color_mode == 'rgb':
@@ -39,6 +41,7 @@ def load_imgs(
     :return: 4D numpy array
     :rtype:
     """
+    data_format = util.get_data_format(data_format)
     image_shape = get_image_shape(target_size, data_format, color_mode)
     xs = np.zeros((len(paths),) + image_shape, dtype=K.floatx())
     for i, path in enumerate(paths):
@@ -59,16 +62,6 @@ def draw_image_from_array(x):
     img = image.array_to_img(x)
     plt.imshow(img)
     plt.show()
-
-
-def prediction_to_label(result, classes):
-    """prediction_to_label
-
-    :param result: array of array
-    :param classes: array of string
-    """
-
-    return [dict(zip(classes, r)) for r in result]
 
 
 def preprocess_function(x):

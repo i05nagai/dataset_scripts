@@ -76,7 +76,7 @@ def cross_validation(model_name, data_dir, fine_tune):
 
 
 def cross_validation_fine_tune(model_name):
-    from . import _fine_tune
+    from . import model_helper
     from . import cross_validation as cv
     import keras.optimizers
 
@@ -94,7 +94,7 @@ def cross_validation_fine_tune(model_name):
     base_model = model_name
 
     def model_creator():
-        model = _fine_tune.create_model(base_model, classes, target_size)
+        model = model_helper.create_model(base_model, classes, target_size)
         model.compile(
             loss='categorical_crossentropy',
             optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
@@ -132,6 +132,37 @@ def write_predict_to_csv(path, xs, ys, classes):
 
 
 def predict_fine_tune(paths, model_name, classes=None):
+    from . import model_helper
+    from . import predict_helper
+    from . import util_image
+    from . import util_file
+    from . import util
+
+    classes = settings.categories
+    target_size = settings.target_size
+    path_to_base = settings.path_to_base
+
+    path_manager = util_file.PathManager(path_to_base, model_name, 'fine_tune')
+    path_to_weight = path_manager.get_latest_weight(model_name)
+
+    model = model_helper.create_model(
+        model_name, classes, target_size, fine_tune=True)
+    model.load_weights(path_to_weight)
+
+    def decode_predictions(y):
+        return util.prediction_to_label(y, classes)
+
+    results = predict_helper.predict_from_path(
+        model,
+        paths,
+        target_size,
+        preprocess_function=util_image.preprocess_function,
+        decode_predictions=decode_predictions)
+
+    return results
+
+
+def predict_fine_tune_old(paths, model_name, classes=None):
     from . import fine_tune
     classes = settings.categories
     target_size = settings.target_size
@@ -147,7 +178,7 @@ def predict_fine_tune(paths, model_name, classes=None):
     return results
 
 
-def train_fine_tune(model_name, data_dir):
+def train_fine_tune_old(model_name, data_dir):
     from . import fine_tune
 
     path_to_base = settings.path_to_base
@@ -165,6 +196,42 @@ def train_fine_tune(model_name, data_dir):
         target_size,
         epochs,
         path_to_base)
+
+
+def train_fine_tune(model_name, data_dir):
+    from . import train_helper
+    from . import model_helper
+    from . import util_file
+    import keras.optimizers
+
+    path_to_base = settings.path_to_base
+    if data_dir is not None:
+        path_to_base = data_dir
+
+    classes = settings.categories
+    batch_size = settings.batch_size
+    target_size = settings.target_size
+    epochs = settings.epochs
+
+    model = model_helper.create_model(model_name, classes, target_size)
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
+        metrics=['accuracy'])
+
+    path_manager = util_file.PathManager(path_to_base, model_name, 'fine_tune')
+    path_to_history = path_manager.history
+    path_to_weight = path_manager.weight
+
+    train_helper.train_from_directory(
+        model,
+        path_to_base,
+        classes,
+        target_size=target_size,
+        batch_size=batch_size,
+        epochs=epochs,
+        path_to_history=path_to_history,
+        path_to_weight=path_to_weight)
 
 
 def predict_normal(paths, model_name, classes=None):

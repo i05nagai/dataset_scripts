@@ -1,6 +1,88 @@
-from ..util import filesystem
 import os
 import re
+
+from ..util import filesystem
+from . import util
+
+
+class PathManager(object):
+    """FineTunerPath
+
+    path_to_dir
+    - train
+    -- img.jpg
+    - validation
+    -- img.jpg
+
+    """
+
+    HISTORY = 'history'
+    WEIGHT = 'weight'
+
+    def __init__(self, path_to_dir, model_name, base_name):
+        self.path_to_dir = path_to_dir
+        # train/validation
+        paths = get_path_train_and_validation(path_to_dir)
+        self.train = paths[0]
+        self.validation = paths[1]
+        # weight
+        path_to_weight = os.path.join(path_to_dir, self.WEIGHT)
+        self.weight = os.path.join(
+            path_to_weight, '{0}.h5'.format(base_name))
+        # history
+        path_to_history = os.path.join(path_to_dir, self.HISTORY)
+        self.history = os.path.join(
+            path_to_history, '{0}.txt'.format(base_name))
+        # make directory
+        filesystem.make_directory(path_to_weight)
+        filesystem.make_directory(path_to_history)
+        # rename
+        self._path_rename(model_name)
+        # basename
+        self.base_name = base_name
+
+    def _path_rename(self, model_name):
+        date_str = util.current_datetime_str()
+        prefix = '{0}_{1}'.format(date_str, model_name)
+
+        rename_list = [
+            'history',
+            'weight',
+        ]
+        for var_name in rename_list:
+            var = getattr(self, var_name)
+            new_name = filesystem.add_prefix_to_filename(var, prefix)
+            setattr(self, var_name, new_name)
+
+    def get_latest_weight(self, model_name):
+        """get_latest_weight
+        2017_11_01_08_28_17_vgg16_fine_tuned.h5
+        """
+        path_to_weight = os.path.join(self.path_to_dir, self.WEIGHT)
+        files = filesystem.get_filename(path_to_weight)
+
+        date_str = r'\d{4}_(\d\d_){5}'
+        filename = '{0}.h5'.format(self.base_name)
+        pattern = '{0}{1}_{2}'.format(date_str, model_name, filename)
+        for fname in sorted(files, reverse=True):
+            if re.match(pattern, fname):
+                return os.path.join(path_to_weight, fname)
+        # not found weight file
+        raise ValueError('Weight file is not found')
+
+    def get_latest_history():
+        """get_latest_history
+        2017_11_01_08_28_17_vgg16_history_fc_layer.txt
+        """
+        pass
+
+
+def add_model_and_time_as_prefix(path, model_name):
+    date_str = util.current_datetime_str()
+    prefix = '{0}_{1}'.format(date_str, model_name)
+
+    path = filesystem.add_prefix_to_filename(path, prefix)
+    return path
 
 
 def get_latest_weight(path_to_dir, model_name, basename):

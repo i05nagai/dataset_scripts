@@ -6,7 +6,7 @@ import keras.engine.training as training
 from . import fine_tune
 
 
-def create_model(base_model, classes, target_size):
+def _create_model_fine_tune(base_model, classes, target_size):
 
     if isinstance(base_model, str):
         input_tensor = layers.Input(shape=(target_size[0], target_size[1], 3))
@@ -35,4 +35,12 @@ def create_model(base_model, classes, target_size):
         name='fine_tuned_model')
     for layer in model.layers[:num_fixed_layers]:
         layer.trainable = False
+    return model
+
+
+def create_model(base_model, classes, target_size, fine_tune=True):
+    if fine_tune:
+        model = _create_model_fine_tune(base_model, classes, target_size)
+    else:
+        model = _create_model_fine_tune(base_model, classes, target_size)
     return model

@@ -1,4 +1,4 @@
-from . import _fine_tune as target
+from . import model_helper as target
 from . import settings
 from . import fine_tune
 from . import util
