@@ -101,6 +101,10 @@ def predict_old(paths, model_name, data_dir, fine_tune):
     from ..util import filesystem
     from ..ml import score
 
+    paths = list(paths)
+    if data_dir is not None:
+        paths += filesystem.get_filepath(data_dir)
+
     path_csv = 'predict_result.csv'
     path_json = 'predict_result.json'
     if fine_tune:
