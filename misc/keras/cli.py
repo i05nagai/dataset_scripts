@@ -75,6 +75,20 @@ def cross_validation(model_name, data_dir, fine_tune):
         pass
 
 
+@cli.command(help='Train models')
+@click.option(
+    '--model_name',
+    type=click.Choice(MODELS),
+    default=DEFAULT_MODEL)
+@click.option('--data_dir')
+@click.option('--fine_tune', is_flag=True, default=True)
+def train_old(model_name, data_dir, fine_tune):
+    if fine_tune:
+        train_fine_tune_old(model_name, data_dir)
+    else:
+        pass
+
+
 def cross_validation_fine_tune(model_name):
     from . import model_helper
     from . import cross_validation as cv
