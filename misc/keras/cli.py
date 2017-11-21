@@ -89,6 +89,30 @@ def train_old(model_name, data_dir, fine_tune):
         pass
 
 
+@cli.command(help='Predict')
+@click.argument('paths', nargs=-1, type=tuple)
+@click.option(
+    '--model_name',
+    type=click.Choice(MODELS),
+    default=DEFAULT_MODEL)
+@click.option('--data_dir', type=str)
+@click.option('--fine_tune', is_flag=True, default=False)
+def predict_old(paths, model_name, data_dir, fine_tune):
+    from ..util import filesystem
+    from ..ml import score
+
+    path_csv = 'predict_result.csv'
+    path_json = 'predict_result.json'
+    if fine_tune:
+        classes = settings.categories
+        results = predict_fine_tune_old(paths, model_name, classes)
+        # save as csv
+        write_predict_to_csv(path_csv, paths, results, classes)
+        # save as json
+        results = score.get_top_n_prediction_from_file(path_csv, 1)
+        filesystem.save_as_json(path_json, results)
+
+
 def cross_validation_fine_tune(model_name):
     from . import model_helper
     from . import cross_validation as cv
