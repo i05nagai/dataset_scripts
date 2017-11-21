@@ -81,7 +81,7 @@ def cross_validation(model_name, data_dir, fine_tune):
     type=click.Choice(MODELS),
     default=DEFAULT_MODEL)
 @click.option('--data_dir')
-@click.option('--fine_tune', is_flag=True, default=True)
+@click.option('--fine_tune', is_flag=True, default=False)
 def train_old(model_name, data_dir, fine_tune):
     if fine_tune:
         train_fine_tune_old(model_name, data_dir)
