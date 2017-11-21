@@ -10,7 +10,7 @@ def train_from_directory(
         target_size=(256, 256),
         batch_size=32,
         epochs=1,
-        steps_per_epoch=1,
+        steps_per_epoch=None,
         path_to_history=None,
         path_to_weight=None):
 

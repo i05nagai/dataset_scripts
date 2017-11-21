@@ -20,6 +20,7 @@ from ..util import filesystem
 from . import util
 from . import util_file
 from . import util_image
+from . import model_helper
 from . import directory_iterator
 
 
@@ -113,44 +114,6 @@ class FineTunerPath(object):
         pass
 
 
-def _resnet50_top_fully_connected_layers(num_class, input_shape):
-    top_model = keras.models.Sequential()
-    top_model.add(layers.Flatten(input_shape=input_shape))
-    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
-
-    # maxpool = model.get_layer(name='avg_pool')
-    # shape = maxpool.output_shape[1:]
-    # dense = model.get_layer(name='fc1000')
-    # layer_utils.convert_dense_weights_data_format(
-    #     top_model, input_shape, 'channels_first')
-    return top_model
-
-
-def _vgg16_top_fully_connected_layers(num_class, input_shape):
-    top_model = keras.models.Sequential()
-    top_model.add(layers.Flatten(input_shape=input_shape))
-    top_model.add(layers.Dense(256, activation='relu'))
-    top_model.add(layers.Dropout(0.5))
-    top_model.add(layers.Dense(num_class, activation='sigmoid', name='fc'))
-    return top_model
-
-
-def _inception_resnet_v2_top_fully_connected_layers(num_class, input_shape):
-    top_model = keras.models.Sequential()
-    top_model.add(layers.GlobalAveragePooling2D(
-        input_shape=input_shape, name='avg_pool'))
-    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
-    return top_model
-
-
-def _inception_v3_top_fully_connected_layers(num_class, input_shape):
-    top_model = keras.models.Sequential()
-    top_model.add(layers.GlobalAveragePooling2D(
-        input_shape=input_shape, name='avg_pool'))
-    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
-    return top_model
-
-
 def gen_directory_iterator(
         path_to_image,
         target_size,
@@ -201,19 +164,19 @@ class FineTuner(object):
     def __init__(self, model_name):
         if model_name == 'resnet50':
             self.model = resnet50.ResNet50
-            self.top_model = _resnet50_top_fully_connected_layers
+            self.top_model = model_helper.resnet50_top_fully_connected_layers
             self.num_fixed_layers = 173
         elif model_name == 'inception_resnet_v2':
             # self.model = inception_resnet_v2.InceptionResNetV2
-            self.top_model = _inception_resnet_v2_top_fully_connected_layers
+            self.top_model = model_helper.inception_resnet_v2_top_fully_connected_layers
             self.num_fixed_layers = 310
         elif model_name == 'inception_v3':
             self.model = inception_v3.InceptionV3
-            self.top_model = _inception_v3_top_fully_connected_layers
+            self.top_model = model_helper.inception_v3_top_fully_connected_layers
             self.num_fixed_layers = 310
         else:
             self.model = vgg16.VGG16
-            self.top_model = _vgg16_top_fully_connected_layers
+            self.top_model = model_helper.vgg16_top_fully_connected_layers
             self.num_fixed_layers = 15
         self.model_name = model_name
 
