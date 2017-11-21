@@ -3,6 +3,8 @@ import keras.applications.resnet50 as resnet50
 import keras.layers as layers
 import keras.engine.training as training
 
+from . import fine_tune
+
 
 def create_model(base_model, classes, target_size):
 
@@ -11,22 +13,26 @@ def create_model(base_model, classes, target_size):
         if base_model == 'vgg16':
             base_model = vgg16.VGG16(
                 include_top=False, input_tensor=input_tensor)
-        if base_model == 'resnet50':
+            top_model = fine_tune._vgg16_top_fully_connected_layers(
+                len(classes), base_model.output_shape[1:])
+            num_fixed_layers = 15
+        elif base_model == 'resnet50':
             base_model = resnet50.ResNet50(
                 include_top=False,
                 input_tensor=input_tensor)
-            x = base_model.outputs[0]
-            batch_input_shape = base_model.output_shape
-            x = layers.Flatten(batch_input_shape=batch_input_shape)(x)
-            print(x)
-            x = layers.Dense(
-                len(classes), activation='softmax', name='fc_layer')(x)
-            print(x)
+            top_model = fine_tune._resnet50_top_fully_connected_layers(
+                len(classes), base_model.output_shape[1:])
             num_fixed_layers = 173
         else:
             base_model = vgg16.VGG16(include_top=False)
+            top_model = fine_tune._vgg16_top_fully_connected_layers(
+                len(classes), base_model.output_shape[1:])
+            num_fixed_layers = 15
 
-    model = training.Model(base_model.inputs[0], x, name='fine_tuned_model')
+    model = training.Model(
+        base_model.input,
+        top_model(base_model.output),
+        name='fine_tuned_model')
     for layer in model.layers[:num_fixed_layers]:
         layer.trainable = False
     return model

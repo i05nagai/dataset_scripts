@@ -29,9 +29,18 @@ def load_single_image(path_to_img, target_size):
 
 def load_imgs(
         paths, target_size, data_format='channels_last', color_mode='rgb'):
+    """load_imgs_as_batch
+
+    :param paths:
+    :param target_size:
+    :param data_format:
+    :param color_mode:
+
+    :return: 4D numpy array
+    :rtype:
+    """
     image_shape = get_image_shape(target_size, data_format, color_mode)
     xs = np.zeros((len(paths),) + image_shape, dtype=K.floatx())
-    print('paths: {0}'.format(paths))
     for i, path in enumerate(paths):
         img = image.load_img(path, target_size=target_size)
         x = image.img_to_array(img)

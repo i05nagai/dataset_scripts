@@ -10,7 +10,7 @@ MODELS = [
     'vgg16',
     'inception_v3',
 ]
-DEFAULT_MODEL = 'resnet50'
+DEFAULT_MODEL = 'vgg16'
 
 
 @click.group()
@@ -53,10 +53,10 @@ def predict(paths, model_name, data_dir, fine_tune):
     type=click.Choice(MODELS),
     default=DEFAULT_MODEL)
 @click.option('--data_dir')
-@click.option('--fine_tune', default=False)
+@click.option('--fine_tune', is_flag=True, default=False)
 def train(model_name, data_dir, fine_tune):
     if fine_tune:
-        train_fine_tune(model_name)
+        train_fine_tune(model_name, data_dir)
     else:
         pass
 
@@ -82,13 +82,13 @@ def cross_validation_fine_tune(model_name):
 
     image_data_generator = None
     n_splits = 2
+    steps_per_epoch = None
 
     # from settings
     classes = settings.categories
     path_to_base = settings.path_to_base
     target_size = settings.target_size
     batch_size = settings.batch_size
-    steps_per_epoch = 1
     epochs = settings.epochs
 
     base_model = model_name
@@ -108,9 +108,9 @@ def cross_validation_fine_tune(model_name):
         target_size=target_size,
         data_format=None,
         batch_size=batch_size,
-        steps_per_epoch=steps_per_epoch,
         epochs=epochs,
         n_splits=n_splits,
+        steps_per_epoch=steps_per_epoch,
         image_data_generator=image_data_generator)
 
 
@@ -147,9 +147,12 @@ def predict_fine_tune(paths, model_name, classes=None):
     return results
 
 
-def train_fine_tune(model_name):
+def train_fine_tune(model_name, data_dir):
     from . import fine_tune
+
     path_to_base = settings.path_to_base
+    if data_dir is not None:
+        path_to_base = data_dir
     classes = settings.categories
     batch_size = settings.batch_size
     target_size = settings.target_size
