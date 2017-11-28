@@ -1,0 +1,16 @@
+.flex-container {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  flex-direction: row;
+}
+.flex-item {
+  width: 150px;
+  height: 150px;
+  color: white;
+  text-align: center;
+}
+.flex-item__image {
+  width: 150px;
+  height: 150px;
+}
