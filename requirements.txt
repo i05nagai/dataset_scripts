@@ -4,3 +4,4 @@ pillow
 keras
 h5py
 yaml
+click

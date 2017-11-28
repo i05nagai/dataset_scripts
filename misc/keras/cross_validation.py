@@ -1,95 +1,100 @@
 import numpy as np
-import os
 import keras.backend as K
+import sklearn.model_selection as model_selection
+import keras.utils
 
 from . import util_image
-from ..util import filesystem
+from . import util_file
 
 
-def get_labels(paths, classes):
-    """get_labels
+def validate(
+        model_creator,
+        xs,
+        ys,
+        ys_categorical,
+        kfold,
+        batch_size,
+        epochs,
+        steps_per_epoch=None,
+        image_data_generator=None):
+    histories = []
 
-    :param paths:
-    :param classes:
-    """
-    labels = []
-    for path in paths:
-        dir_name = os.path.basename(os.path.dirname(path))
-        if dir_name in classes:
-            index = classes.index(dir_name)
-            labels.append(index)
+    for train, test in kfold.split(xs, ys):
+        print(train, test)
+        model = model_creator()
+
+        if image_data_generator is not None:
+            # train
+            iter_train = image_data_generator.flow(
+                xs[train], ys_categorical[train],
+                batch_size=batch_size,
+                shuffle=False,
+                seed=None)
+            # validation
+            iter_validation = image_data_generator.flow(
+                xs[test], ys_categorical[test],
+                batch_size=batch_size,
+                shuffle=False,
+                seed=None)
+            history = model.fit_generator(
+                iter_train,
+                steps_per_epoch,
+                epochs=epochs,
+                validation_data=iter_validation,
+                validation_steps=steps_per_epoch,
+                class_weight=None,
+                max_queue_size=10,
+                workers=1,
+                use_multiprocessing=False,
+                shuffle=True,
+                nitial_epoch=0)
         else:
-            raise ValueError('directory name must be same as one of classes.'
-                             '{0}'.format(dir_name))
-    return labels
+            history = model.fit(
+                xs[train],
+                ys_categorical[train],
+                batch_size=batch_size,
+                steps_per_epoch=steps_per_epoch,
+                epochs=epochs,
+                validation_data=(xs[test], ys_categorical[test]),
+                validation_steps=steps_per_epoch)
+        histories.append(history)
+        return histories
 
 
-def get_paths_and_labels(path_to_train, path_to_validation, classes):
-    paths = []
-    # train file path
-    paths = filesystem.get_filepath(path_to_train)
-    # validation file path
-    paths += filesystem.get_filepath(path_to_validation)
+def kfold_from_directory(
+        model_creator,
+        path_to_base,
+        classes,
+        target_size=(256, 256),
+        data_format=None,
+        batch_size=32,
+        epochs=1,
+        n_splits=2,
+        steps_per_epoch=None,
+        image_data_generator=None):
+    """kfold_from_directory
 
-    labels = get_labels(paths, classes)
-    return paths, labels
+    :param model_creator: return compiled model.
+    :param type: function
+    """
+    if data_format is None:
+        data_format = K.image_data_format()
 
+    xs, ys = util_file.get_paths_and_labels(path_to_base, classes)
+    xs = util_image.load_imgs(xs, target_size, data_format)
+    ys_categorical = keras.utils.to_categorical(ys, len(classes))
+    ys = np.array(ys)
 
-class Report(object):
-
-    def __init__(self, num_cross_validation, loss_functions):
-        self.num = [0] * num_cross_validation
-        self.num_true = [0] * num_cross_validation
-        self.num_loss = [0.0] * num_cross_validation
-        self.loss_functions = loss_functions
-
-    def add(self, num_try, predict, output):
-        pass
-
-
-class CrossValidator(object):
-
-    def __init__(self, kfold, loss, image_data_generator=None):
-        self.kfold = kfold
-        self.image_data_generator = image_data_generator
-
-    def _train(self, xs, target_size, data_format):
-        # train
-        x = util_image.load_imgs(xs[train], target_size, data_format)
-        # train
-        array_iter = self.image_data_generator.flow(
-            x, ys[train],
-            batch_size=batch_size,
-            shuffle=False,
-            seed=None)
-
-    def _evaluate(self):
-        pass
-
-    def validate(self,
-                 model,
-                 path_to_train,
-                 path_to_validation,
-                 classes,
-                 n_splits,
-                 target_size=(256, 256),
-                 data_format=None,
-                 batch_size=32,
-                 steps=None):
-        if data_format is None:
-            data_format = K.image_data_format()
-
-        xs, ys = get_paths_and_labels(
-            path_to_train, path_to_validation, classes)
-        xs = util_image.load_imgs(xs, target_size, data_format)
-        xs = np.array(xs)
-        ys = np.array(ys)
-        # report = Report(n_splits)
-
-        num_try = 0
-        for train, test in self.kfold.split(xs, ys):
-            print(train)
-            print(xs[train].shape)
-            result = model.evaluate_generator(
-                array_iter, steps)
-            result = np.argmax(result)
+    kfold = model_selection.StratifiedKFold(
+        n_splits=n_splits, shuffle=True)
+    histories = validate(
+        model_creator,
+        xs,
+        ys,
+        ys_categorical,
+        kfold,
+        batch_size=batch_size,
+        steps_per_epoch=steps_per_epoch,
+        epochs=epochs,
+        image_data_generator=image_data_generator)
+    return histories

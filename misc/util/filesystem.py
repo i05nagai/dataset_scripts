@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import errno
 import os
+import json
 
 
 def get_filename(path_to_dir, recursive=True):
@@ -20,8 +21,9 @@ def get_filename(path_to_dir, recursive=True):
 
 def get_filepath(path_to_dir, recursive=True):
     if not recursive:
-        # return only file name
-        return os.listdir(path_to_dir)
+        filenames = os.listdir(path_to_dir)
+        filepaths = [os.path.join(path_to_dir, name) for name in filenames]
+        return filepaths
     else:
         filepaths = []
         for root, subdirs, files in os.walk(path_to_dir):
@@ -71,3 +73,8 @@ def make_directory(path):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+
+def save_as_json(path, json_dict):
+    with open(path, 'w') as f:
+        json.dump(json_dict, f, indent=2, sort_keys=True)

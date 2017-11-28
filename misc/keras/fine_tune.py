@@ -18,7 +18,9 @@ import re
 
 from ..util import filesystem
 from . import util
+from . import util_file
 from . import util_image
+from . import model_helper
 from . import directory_iterator
 
 
@@ -33,8 +35,6 @@ class FineTunerPath(object):
 
     """
 
-    TRAIN = 'train'
-    VALIDATION = 'validation'
     HISTORY = 'history'
     WEIGHT = 'weight'
     FEATURE = 'feature'
@@ -42,8 +42,9 @@ class FineTunerPath(object):
     def __init__(self, path_to_dir):
         self.path_to_dir = path_to_dir
         # train/validation
-        self.train = os.path.join(path_to_dir, self.TRAIN)
-        self.validation = os.path.join(path_to_dir, self.VALIDATION)
+        paths = util_file.get_path_train_and_validation(path_to_dir)
+        self.train = paths[0]
+        self.validation = paths[1]
         # feature
         path_to_feature = os.path.join(path_to_dir, self.FEATURE)
         self.feature_bottleneck_train = os.path.join(
@@ -113,44 +114,6 @@ class FineTunerPath(object):
         pass
 
 
-def _resnet50_top_fully_connected_layers(num_class, input_shape):
-    top_model = keras.models.Sequential()
-    top_model.add(layers.Flatten(input_shape=input_shape))
-    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
-
-    # maxpool = model.get_layer(name='avg_pool')
-    # shape = maxpool.output_shape[1:]
-    # dense = model.get_layer(name='fc1000')
-    # layer_utils.convert_dense_weights_data_format(
-    #     top_model, input_shape, 'channels_first')
-    return top_model
-
-
-def _vgg16_top_fully_connected_layers(num_class, input_shape):
-    top_model = keras.models.Sequential()
-    top_model.add(layers.Flatten(input_shape=input_shape))
-    top_model.add(layers.Dense(256, activation='relu'))
-    top_model.add(layers.Dropout(0.5))
-    top_model.add(layers.Dense(num_class, activation='sigmoid', name='fc'))
-    return top_model
-
-
-def _inception_resnet_v2_top_fully_connected_layers(num_class, input_shape):
-    top_model = keras.models.Sequential()
-    top_model.add(layers.GlobalAveragePooling2D(
-        input_shape=input_shape, name='avg_pool'))
-    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
-    return top_model
-
-
-def _inception_v3_top_fully_connected_layers(num_class, input_shape):
-    top_model = keras.models.Sequential()
-    top_model.add(layers.GlobalAveragePooling2D(
-        input_shape=input_shape, name='avg_pool'))
-    top_model.add(layers.Dense(num_class, activation='softmax', name='fc'))
-    return top_model
-
-
 def gen_directory_iterator(
         path_to_image,
         target_size,
@@ -201,19 +164,19 @@ class FineTuner(object):
     def __init__(self, model_name):
         if model_name == 'resnet50':
             self.model = resnet50.ResNet50
-            self.top_model = _resnet50_top_fully_connected_layers
+            self.top_model = model_helper.resnet50_top_fully_connected_layers
             self.num_fixed_layers = 173
         elif model_name == 'inception_resnet_v2':
             # self.model = inception_resnet_v2.InceptionResNetV2
-            self.top_model = _inception_resnet_v2_top_fully_connected_layers
+            self.top_model = model_helper.inception_resnet_v2_top_fully_connected_layers
             self.num_fixed_layers = 310
         elif model_name == 'inception_v3':
             self.model = inception_v3.InceptionV3
-            self.top_model = _inception_v3_top_fully_connected_layers
+            self.top_model = model_helper.inception_v3_top_fully_connected_layers
             self.num_fixed_layers = 310
         else:
             self.model = vgg16.VGG16
-            self.top_model = _vgg16_top_fully_connected_layers
+            self.top_model = model_helper.vgg16_top_fully_connected_layers
             self.num_fixed_layers = 15
         self.model_name = model_name
 
@@ -379,12 +342,56 @@ class FineTuner(object):
             ft_path, target_size, classes, epochs, batch_size)
 
     def predict(
-            self, path_to_image, target_size, num_class, path_to_weight):
-        xs = util.load_single_image(path_to_image, target_size)
-        xs = preprocess_input(xs)
+            self, paths, target_size, num_class, path_to_weight):
+        xs = util_image.load_imgs(paths, target_size)
+        for i, x in enumerate(xs):
+            xs[i] = preprocess_input(x)
         model = self.combined_model(
             target_size,
             num_class,
             path_to_weight_fc_layer=None,
             path_to_weight_fine_tune=path_to_weight)
         return model.predict(xs)
+
+
+def train(
+        model_name,
+        classes,
+        batch_size,
+        target_size,
+        epochs,
+        path_to_base):
+    ft_path = FineTunerPath(path_to_base)
+    ft_path._path_rename(model_name)
+
+    fine_tuner = FineTuner(model_name)
+    fine_tuner.train(
+        ft_path,
+        classes,
+        target_size,
+        batch_size,
+        epochs)
+
+
+def predict(
+        paths,
+        model_name,
+        classes,
+        target_size,
+        path_to_base):
+    path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
+    paths = [os.path.join(path_to_this_dir, path) for path in paths]
+
+    fine_tuner = FineTuner(model_name)
+    num_class = len(classes)
+    ft_path = FineTunerPath(path_to_base)
+    path_to_weight_fine_tune = ft_path.get_latest_weight(model_name)
+    print('path_to_weight_fine_tune: {0}'.format(path_to_weight_fine_tune))
+
+    result = fine_tuner.predict(
+        paths, target_size, num_class, path_to_weight_fine_tune)
+
+    if classes is not None:
+        result = util.prediction_to_label(result, classes)
+
+    return result
