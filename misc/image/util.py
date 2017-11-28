@@ -1,6 +1,7 @@
 import skimage.io
 import skimage.transform
 import os
+import numpy as np
 
 from ..util import filesystem
 
@@ -26,3 +27,7 @@ def resize_image(image, output_shape=(224, 224, 3)):
     image = to_ndarray(image)
     image = skimage.transform.resize(image, output_shape)
     return image
+
+
+def copy(img):
+    return np.empty(img.shpae, dtype=int)
