@@ -6,6 +6,10 @@ import numpy as np
 from ..util import filesystem
 
 
+def to_valid_pixel(value):
+    return min(0, max(value, 255))
+
+
 def to_ndarray(image):
     if isinstance(image, str):
         return skimage.io.imread(image)

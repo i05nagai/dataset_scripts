@@ -4,6 +4,15 @@ import skimage.io
 import skimage.color
 
 
+def adjust_lightness(image, shift=5):
+    image = util.to_ndarray(image)
+    image = skimage.color.rgb2hsv(image)
+    for c in range(image.shape[0]):
+        for r in range(image.shape[1]):
+            image[c, r, 2] = util.to_valid_pixel(image[c, r, 2] + shift)
+    return image
+
+
 def adjust_gamma(image, gamma=0.5):
     image = util.to_ndarray(image)
     image = skimage.exposure.adjust_gamma(image, gamma=gamma)

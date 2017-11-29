@@ -2,8 +2,17 @@ import scipy.interpolate
 import skimage.exposure
 
 
+def validate_interpolate_points(points):
+    unique = {}
+    for p in points:
+        unique[p[0]] = p[1]
+    return [(k, v) for k, v in unique.items()]
+
+
 def curve_spline(points):
     points = [(0, 0)] + points + [(255, 255)]
+    points = validate_interpolate_points(points)
+
     x = [p[0] for p in points]
     y = [p[1] for p in points]
     tck = scipy.interpolate.splrep(x, y, s=0)
