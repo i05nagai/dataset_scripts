@@ -6,8 +6,18 @@ import numpy as np
 from ..util import filesystem
 
 
+def copy(image, dtype=None):
+    if dtype is None:
+        dtype = image.dtype
+    return image.astype(dtype)
+
+
 def to_valid_pixel(value):
-    return min(0, max(value, 255))
+    return max(0, min(value, 255))
+
+
+def to_valid_image(image):
+    return np.clip(image, 0, 255)
 
 
 def to_ndarray(image):
@@ -31,7 +41,3 @@ def resize_image(image, output_shape=(224, 224, 3)):
     image = to_ndarray(image)
     image = skimage.transform.resize(image, output_shape)
     return image
-
-
-def copy(img):
-    return np.empty(img.shpae, dtype=int)

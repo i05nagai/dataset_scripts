@@ -12,6 +12,7 @@ def validate_interpolate_points(points):
 def curve_spline(points):
     points = [(0, 0)] + points + [(255, 255)]
     points = validate_interpolate_points(points)
+    print(points)
 
     x = [p[0] for p in points]
     y = [p[1] for p in points]
@@ -23,9 +24,8 @@ def curve_spline(points):
 
 def intensity_curve_spline(img, channel, points):
     ynew = curve_spline(points)
-    shape = img.shape
-    for w in range(shape[0]):
-        for c in range(shape[1]):
+    for w in range(img.shape[0]):
+        for c in range(img.shape[1]):
             img[w, c, channel] = int(ynew[int(img[w, c, channel])])
     return img
 
