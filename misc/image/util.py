@@ -27,7 +27,7 @@ def to_ndarray(image):
 
 
 def transpose_and_save(path_to_dir, path_to_save_dir, transposer, args={}):
-    filenames = filesystem.get_filepath(path_to_dir)
+    filenames = filesystem.get_filename(path_to_dir)
 
     for filename in filenames:
         path = os.path.join(path_to_dir, filename)
