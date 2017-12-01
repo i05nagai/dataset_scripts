@@ -1,5 +1,4 @@
-/scripts/imagenet/images
-/example_keras/image
+/data
 
 # for osx
 .DS_Store
