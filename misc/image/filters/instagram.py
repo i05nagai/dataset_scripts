@@ -1,5 +1,4 @@
 import skimage
-import numpy as np
 
 from . import curve
 from . import blend
@@ -16,9 +15,8 @@ def nashville(img):
     ]
     curve.intensity_curve_spline(img, 2, points)
     curve.rescale_intensity(img, (0, 236), (0, 255))
-    skimage.exposure.adust_gamma(img, 1.36)
-    # adjust brightness contrast (6, 12)
-    histogram.adjust_lightness(img, 6)
+    skimage.exposure.adjust_gamma(img, 1.36)
+    histogram.adjust_contrast_and_intensity(img, 12, 6)
 
     # adjust curves colors
     points = [
@@ -29,8 +27,7 @@ def nashville(img):
         (88, 0),
     ]
     curve.intensity_curve_spline(img, 2, points)
-    # adjust brightness contrast (-6, 5)
-    histogram.adjust_lightness(img, -6)
+    histogram.adjust_contrast_and_intensity(img, 5, -6)
 
     # adjust curves colors
     points = [

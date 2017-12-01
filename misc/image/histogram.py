@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 from . import util
 import skimage.exposure
 import skimage.io
@@ -12,21 +17,22 @@ def is_low_contrast(image, contrast=1, intensity=0):
     return image
 
 
-def adjust_contrast_and_intensity(image, contrast=1, intensity=0):
+def adjust_contrast_and_intensity(image, contrast=0, intensity=0):
+    image = util.to_ndarray(image)
+    image = util.copy(image, dtype='uint16')
+    factor = int(259.0 * (contrast + 255.0) / (255.0 * (259.0 - contrast)))
+    image = factor * (image - 128) + 128 + intensity
+    image = util.to_valid_image(image)
+    return image.astype('uint8', copy=False)
+
+
+def adjust_lightness(image, shift=0.0):
     image = util.to_ndarray(image)
     image = util.copy(image)
-    image = contrast * image + intensity
+    image = skimage.color.rgb2ycbcr(image)
+    image[:, :, 0] = image[:, :, 0] + shift
     image = util.to_valid_image(image)
-    return image
-
-
-def adjust_lightness(image, shift=5):
-    image = util.to_ndarray(image)
-    image = skimage.color.rgb2hsv(image)
-    for c in range(image.shape[0]):
-        for r in range(image.shape[1]):
-            image[c, r, 2] = util.to_valid_pixel(image[c, r, 2] + shift)
-    image = skimage.color.hsv2rgb(image)
+    image = skimage.color.ycbcr2rgb(image)
     return image
 
 

@@ -6,6 +6,12 @@ import numpy as np
 from ..util import filesystem
 
 
+def copy(image, dtype=None):
+    if dtype is None:
+        dtype = image.dtype
+    return image.astype(dtype)
+
+
 def to_valid_pixel(value):
     return max(0, min(value, 255))
 
@@ -35,7 +41,3 @@ def resize_image(image, output_shape=(224, 224, 3)):
     image = to_ndarray(image)
     image = skimage.transform.resize(image, output_shape)
     return image
-
-
-def copy(image):
-    return np.copy(image)
