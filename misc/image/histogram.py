@@ -4,18 +4,37 @@ import skimage.io
 import skimage.color
 
 
+def is_low_contrast(image, contrast=1, intensity=0):
+    image = util.to_ndarray(image)
+    image = util.copy(image)
+    image = contrast * image + intensity
+    image = util.to_valid_image(image)
+    return image
+
+
+def adjust_contrast_and_intensity(image, contrast=1, intensity=0):
+    image = util.to_ndarray(image)
+    image = util.copy(image)
+    image = contrast * image + intensity
+    image = util.to_valid_image(image)
+    return image
+
+
 def adjust_lightness(image, shift=5):
     image = util.to_ndarray(image)
     image = skimage.color.rgb2hsv(image)
     for c in range(image.shape[0]):
         for r in range(image.shape[1]):
             image[c, r, 2] = util.to_valid_pixel(image[c, r, 2] + shift)
+    image = skimage.color.hsv2rgb(image)
     return image
 
 
-def adjust_gamma(image, gamma=0.5):
+def adjust_gamma(image, gamma=1.0):
     image = util.to_ndarray(image)
-    image = skimage.exposure.adjust_gamma(image, gamma=gamma)
+    image = util.copy(image)
+    for c in range(image.shape[2]):
+        image[:, :, c] = skimage.exposure.adjust_gamma(image[:, :, c], gamma=gamma)
     return image
 
 
@@ -27,6 +46,7 @@ def equalize_histogram(image):
 
 def equalize_histogram_adaptive(image):
     image = util.to_ndarray(image)
+    image = util.copy(image)
     image = skimage.exposure.equalize_hist(image)
     return image
 
