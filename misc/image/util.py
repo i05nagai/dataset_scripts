@@ -12,12 +12,16 @@ def copy(image, dtype=None):
     return image.astype(dtype)
 
 
+def empty_image(shape, dtype=None):
+    return np.empty(shape, dtype)
+
+
 def to_valid_pixel(value):
     return max(0, min(value, 255))
 
 
 def to_valid_image(image):
-    return np.clip(image, 0, 255)
+    return np.clip(image, 0, 255).astype('uint8')
 
 
 def to_ndarray(image):
