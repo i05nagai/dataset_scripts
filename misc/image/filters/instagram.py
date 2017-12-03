@@ -3,6 +3,7 @@ import skimage
 from . import curve
 from . import blend
 from .. import histogram
+from .. import util
 
 
 def nashville(img):
@@ -41,4 +42,26 @@ def nashville(img):
 
     fill_color = (255, 218, 173)
     blend.blending(fill_color, img, 'multiply')
+    return img
+
+
+def hefe(img):
+    layer = util.copy(img)
+    layer = util.rgb_to_rgba(layer, 255)
+    # adjust brightness contrast
+    img = histogram.adjust_contrast_and_intensity(img, 25, 15)
+
+    # adjust hue saturation
+    img = histogram.adjust_hue_saturation_lightness(img, 0, 5, -20, 0)
+
+    print(img)
+    img = blend.blending(layer, img, 'overlay')
+    print(img)
+    img = util.rgba_to_rgb(img)
+    # adjust brightness contrast
+    img = histogram.adjust_contrast_and_intensity(img, 5, -15)
+
+    fill_color = (181, 181, 181)
+    img = blend.blending(fill_color, img, 'multiply')
+    img = util.to_valid_image(img)
     return img

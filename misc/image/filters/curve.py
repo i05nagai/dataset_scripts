@@ -14,7 +14,6 @@ def curve_spline(points):
     points = [(0, 0)] + points + [(255, 255)]
     points = validate_interpolate_points(points)
 
-    print(points)
     x = [p[0] for p in points]
     y = [p[1] for p in points]
     xnew = [i for i in range(0, 256)]
