@@ -12,12 +12,32 @@ def copy(image, dtype=None):
     return image.astype(dtype)
 
 
+def rgb_to_rgba(image, alpha=1.0):
+    if image.shape[2] == 4:
+        return image
+    shape = image.shape
+    rgba = np.empty((shape[0], shape[1], 4))
+    rgba.fill(alpha)
+    rgba[:, :, 0:3] = image
+    return rgba
+
+
+def rgba_to_rgb(image):
+    if image.shape[2] == 3:
+        return image
+    return image[:, :, 0:3]
+
+
+def empty_image(shape, dtype=None):
+    return np.empty(shape, dtype)
+
+
 def to_valid_pixel(value):
     return max(0, min(value, 255))
 
 
 def to_valid_image(image):
-    return np.clip(image, 0, 255)
+    return np.clip(image, 0, 255).astype('uint8')
 
 
 def to_ndarray(image):

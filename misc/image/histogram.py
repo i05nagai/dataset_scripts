@@ -9,6 +9,36 @@ import skimage.io
 import skimage.color
 
 
+def adjust_color(image, factor):
+    image_new = util.empty_image(image.shape, image.dtype)
+    # L = R * 299/1000 + G * 587/1000 + B * 114/1000
+    image_new[:, :, 0] = image[:, :, 0] * 299.0 / 1000.0
+    image_new[:, :, 1] = image[:, :, 1] * 587.0 / 1000.0
+    image_new[:, :, 2] = image[:, :, 2] * 114.0 / 1000.0
+    image_new = image_new + factor * (image - image_new)
+    image_new = util.to_valid_image(image_new)
+    return image_new
+
+
+def adjust_hue_saturation_lightness(
+        image, hue_range=0, hue_offset=0, saturation=0, lightness=0):
+    # hue is mapped to [0, 1] from [0, 360]
+    if hue_offset not in range(-180, 180):
+        raise ValueError('Hue should be within (-180, 180)')
+    if saturation not in range(-100, 100):
+        raise ValueError('Saturation should be within (-100, 100)')
+    if lightness not in range(-100, 100):
+        raise ValueError('Lightness should be within (-100, 100)')
+    image = skimage.color.rgb2hsv(image)
+    offset = ((180 + hue_offset) % 180) / 360.0
+    image[:, :, 0] = image[:, :, 0] + offset
+    image[:, :, 1] = image[:, :, 1] + saturation / 200.0
+    image[:, :, 2] = image[:, :, 2] + lightness / 200.0
+    image = skimage.color.hsv2rgb(image) * 255.0
+    image = util.to_valid_image(image)
+    return image
+
+
 def is_low_contrast(image, contrast=1, intensity=0):
     image = util.to_ndarray(image)
     image = util.copy(image)
