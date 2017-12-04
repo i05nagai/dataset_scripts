@@ -1,4 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 from google.cloud import bigquery
+import io
 
 
 def get_client(project_id):
@@ -12,8 +18,9 @@ def get_dataset(client, dataset_id):
     return dataset
 
 
-def get_table(client, table_id, schema=None):
-    table_ref = self.dataset.table(table_id)
+def get_table(client, dataset_id, table_id, schema=None):
+    dataset = get_dataset(client, dataset_id)
+    table_ref = dataset.table(table_id)
     table = bigquery.Table(table_ref, schema=schema)
     return table
 
@@ -111,10 +118,25 @@ class QueryRunner(object):
         iterator = query_job.result(timeout=self.timeout_sec)
         return list(iterator)
 
-    def insert_row(self, table_id, rows):
-        table = get_table(table_id)
-        errors = self.client(table, rows)
+    def insert_rows_json(self, dataset_id, table_id, json_rows):
+        """insert_rows_json
+        Streaming insert.
+        If you want to upload rows synchronically, use upload_data_into_table()
+
+        :param dataset_id:
+        :param table_id:
+        :param json_rows:
+        """
+        table = get_table(self.client, dataset_id, table_id)
+        errors = self.client.create_rows_json(table, json_rows)
         return errors
+
+
+def row_to_dict(row):
+    row_dict = {}
+    for field, index in row._xxx_field_to_index.items():
+        row_dict[field] = row[index]
+    return row_dict
 
 
 def json_to_schema(json_schema):
@@ -227,3 +249,22 @@ def json_to_query_parameter(json_array):
             p = bigquery.ScalarQueryParameter(name, param_type, value)
         parameters.append(p)
     return parameters
+
+
+def json_row_to_str(json_row):
+    return str({str(k): v for k, v in json_row.items()})
+
+
+def upload_jsons_into_table(
+        client, dataset_id, table_id, json_rows):
+    jsons = ',\n'.join([json_row_to_str(json_row) for json_row in json_rows])
+    json_file = io.BytesIO(b'{0}'.format(jsons))
+    dataset = get_dataset(client, dataset_id)
+    table_ref = dataset.table(table_id)
+
+    job_config = bigquery.LoadJobConfig()
+    job_config.source_format = 'NEWLINE_DELIMITED_JSON'
+    job = client.load_table_from_file(
+        json_file, table_ref, job_config=job_config)
+    # Waits for table load to complete.
+    return job.result()
