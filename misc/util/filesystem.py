@@ -52,19 +52,48 @@ def add_prefix_to_filename(path, prefix, separator='_'):
     return path_new
 
 
-def add_suffix_to_filename(path, suffix, separator='_'):
+def add_suffix_to_filename(path: str, suffix: str, separator='_') -> str:
     """add_suffix_to_filename
     Add suffix to filename
 
     :param path:
     :param suffix:
     :param separator:
+
+    :return: suffix with filename
+    :rtype: str
     """
     filename, ext = os.path.splitext(os.path.basename(path))
-    filename_new = '{0}{1}{2}.{3}'.format(filename, separator, suffix, ext)
+    filename_new = '{0}{1}{2}{3}'.format(filename, separator, suffix, ext)
     dirpath = os.path.dirname(path)
     path_new = os.path.join(dirpath, filename_new)
     return path_new
+
+
+def rename_filename(path: str, filename: str):
+    basepath = os.path.basename(path)
+    path_new = '{0}/new_filename'.format(basepath)
+    rename_path(path, path_new)
+
+
+def rename_path(from_path: str, to_path: str):
+    os.rename(from_path, to_path)
+
+
+def rename_filename_with_suffix(
+        path_to_dir: str, suffix: str, separator='_') -> str:
+    """rename_filename_with_suffix
+
+    :param path_to_dir:
+    :param suffix:
+    :param separator:
+
+    :rtype: str
+    """
+    paths = get_filepath(path_to_dir)
+    for path in paths:
+        path_new = add_suffix_to_filename(path, suffix, separator)
+        rename_path(path, path_new)
 
 
 def make_directory(path):
