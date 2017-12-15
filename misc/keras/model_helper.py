@@ -5,7 +5,8 @@ import keras.engine.training as training
 import keras.models
 
 
-def _create_model_fine_tune(base_model, classes, target_size):
+def _create_model_fine_tune(
+        base_model, classes, target_size, train_all_layers=False):
 
     if isinstance(base_model, str):
         input_tensor = layers.Input(shape=(target_size[0], target_size[1], 3))
@@ -32,8 +33,11 @@ def _create_model_fine_tune(base_model, classes, target_size):
         base_model.input,
         top_model(base_model.output),
         name='fine_tuned_model')
-    for layer in model.layers[:num_fixed_layers]:
-        layer.trainable = False
+
+    # train only fc layers
+    if not train_all_layers:
+        for layer in model.layers[:num_fixed_layers]:
+            layer.trainable = False
     return model
 
 
@@ -69,9 +73,8 @@ def inception_v3_top_fully_connected_layers(num_class, input_shape):
     return top_model
 
 
-def create_model(base_model, classes, target_size, fine_tune=True):
-    if fine_tune:
-        model = _create_model_fine_tune(base_model, classes, target_size)
-    else:
-        model = _create_model_fine_tune(base_model, classes, target_size)
+def create_model(
+        base_model, classes, target_size, train_all_layers=False):
+    model = _create_model_fine_tune(
+        base_model, classes, target_size, train_all_layers)
     return model
