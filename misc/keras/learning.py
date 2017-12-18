@@ -18,7 +18,7 @@ def directory_iterator(
         batch_size: int):
     # image generator setttings
     generator = image.ImageDataGenerator(
-        rotation_range=40,
+        rotation_range=90,
         width_shift_range=0.2,
         height_shift_range=0.2,
         rescale=1.0 / 255,
@@ -35,7 +35,7 @@ def directory_iterator(
         color_mode='rgb',
         classes=classes,
         class_mode='categorical',
-        shuffle=False)
+        shuffle=True)
     return dir_iter
 
 
@@ -127,7 +127,7 @@ def main():
 
     base_model = 'vgg16'
     model_creator = get_model_creator(
-        base_model, classes, target_size, train_all_layers=False)
+        base_model, classes, target_size, train_all_layers=True)
 
     train(
         model_creator,
