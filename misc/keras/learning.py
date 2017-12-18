@@ -76,7 +76,7 @@ def predict(
         target_size: Tuple[int, int],
         path_to_weight: str):
     model = model_creator(path_to_weight)
-    xs = util.load_single_image(path_to_image, target_size)
+    xs = util.load_single_image(path_to_image, target_size, preprocess_input)
     return model.predict(xs)
 
 
@@ -129,27 +129,30 @@ def main():
     model_creator = get_model_creator(
         base_model, classes, target_size, train_all_layers=False)
 
-    # train(
-    #     model_creator,
-    #     epochs,
-    #     path_to_train,
-    #     path_to_validation,
-    #     batch_size,
-    #     classes,
-    #     target_size,
-    #     path_to_weight=path_to_weight,
-    #     path_to_history=path_to_history)
+    train(
+        model_creator,
+        epochs,
+        path_to_train,
+        path_to_validation,
+        batch_size,
+        classes,
+        target_size,
+        path_to_weight=path_to_weight,
+        path_to_history=path_to_history)
 
     # predict by combined model
-    path_to_image = os.path.join(
-        path_to_base,
-        'validation/open/img.retty.me_img_ebisu_restaurant_100000065182_archive_74619-580607dc43f64.jpg')
-    results = predict(
-        model_creator,
-        path_to_image,
-        target_size,
-        path_to_weight)
-    print(results)
+    images = [
+        '',
+    ]
+    for image in images:
+        path_to_image = os.path.join(
+            path_to_base, image)
+        results = predict(
+            model_creator,
+            path_to_image,
+            target_size,
+            path_to_weight)
+        print(results)
 
 
 if __name__ == '__main__':
