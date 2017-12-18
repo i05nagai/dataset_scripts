@@ -64,7 +64,7 @@ def draw_image_from_array(x):
     plt.show()
 
 
-def preprocess_function(x):
+def preprocess_function(x, rescale=255.0):
     """preprocess_function
     for imagenet input from ImageDataGenerator
 
@@ -73,6 +73,8 @@ def preprocess_function(x):
     :return:
     :rtype: rank 3 tensor
     """
+    # if rescale is not None:
+    #    x /= 255.
     xs = np.expand_dims(x, axis=0)
     xs = imagenet_utils.preprocess_input(xs)
     xs = np.squeeze(xs, axis=0)
