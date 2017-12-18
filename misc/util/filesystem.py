@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import errno
 import os
 import json
+import shutil
 
 
 def get_filename(path_to_dir, recursive=True):
@@ -107,3 +108,51 @@ def make_directory(path):
 def save_as_json(path, json_dict):
     with open(path, 'w') as f:
         json.dump(json_dict, f, indent=2, sort_keys=True)
+
+
+def get_filepath_with_condition(path_to_dir, functor):
+    path_matched = []
+    for path in get_filepath(path_to_dir):
+        if functor(path):
+            path_matched.append(path)
+    return path_matched
+
+
+def change_directory_in_path(path: str, path_to_dir: str):
+    filename = os.path.basename(path)
+    return os.path.join(path_to_dir, filename)
+
+
+def copy_file(path_from: str, path_to: str):
+    shutil.copyfile(path_from, path_to)
+
+
+def copy_file_with_condition(
+        path_to_dir: str,
+        functor,
+        path_to_copy_dir: str,
+        offset: int=0):
+    path_matched = []
+    paths = get_filepath(path_to_dir)
+    for i, path in enumerate(paths[offset:], offset):
+        print('{0}-{1}'.format(i, path))
+        if functor(path):
+            path_matched.append(path)
+            path_new = change_directory_in_path(path, path_to_copy_dir)
+            copy_file(path, path_new)
+
+    return path_matched
+
+
+def classify_file_with_condition(
+        path_to_dir: str,
+        functor,
+        path_to_copy_dirs: str,
+        offset: int=0) -> None:
+    paths = get_filepath(path_to_dir)
+    for i, path in enumerate(paths[offset:], offset):
+        print('{0}-{1}'.format(i, path))
+        index_category = functor(path)
+        path_to_copy_dir = path_to_copy_dirs[index_category]
+        path_new = change_directory_in_path(path, path_to_copy_dir)
+        copy_file(path, path_new)

@@ -36,5 +36,10 @@ categories = read_labels()
 epochs = 2
 
 # path
+path_to_base = os.path.join(
+    os.path.dirname(__file__),
+    '..',
+    '..',
+    'data/images/private')
+path_to_base = os.path.abspath(path_to_base)
 path_to_dir = os.path.abspath(os.path.dirname(__file__))
-path_to_base = os.path.join(path_to_dir, 'image')

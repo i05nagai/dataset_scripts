@@ -49,6 +49,11 @@ def make_image_gallery(images_list):
 
 
 def save_image_gallery(images_list, path_to_output):
+    """save_image_gallery
+
+    :param images_list:
+    :param path_to_output:
+    """
     html = make_image_gallery(images_list)
     try:
         with open(path_to_output, 'w') as f:

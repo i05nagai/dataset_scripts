@@ -76,62 +76,39 @@ def adjust_gamma(image, gamma=1.0):
     image = util.to_ndarray(image)
     image = util.copy(image)
     for c in range(image.shape[2]):
-        image[:, :, c] = skimage.exposure.adjust_gamma(image[:, :, c], gamma=gamma)
+        image[:, :, c] = skimage.exposure.adjust_gamma(
+            image[:, :, c], gamma=gamma)
     return image
 
 
-def strech_contrast(image):
-    image = util.to_ndarray(image)
+def is_overexposure(image, threshold=10):
     intensity = get_intensity(image)
-    p2, p50, p98 = np.percentile(intensity, (1, 50, 99))
-    print(p2)
-    print(p50)
-    print(p98)
-    rescaled = skimage.exposure.rescale_intensity(image, in_range=(p2, p98))
-    return rescaled
+    p1, p50, p98 = np.percentile(intensity, (1, 50, 99))
+    if p1 > threshold:
+        return True
+    else:
+        return False
+
+
+def stretch_contrast(image, threshold=10):
+    image = util.to_ndarray(image)
+    if is_overexposure(image, threshold):
+        intensity = get_intensity(image)
+        p1, p99 = np.percentile(intensity, (1, 99))
+        return skimage.exposure.rescale_intensity(image, in_range=(p1, p99))
+    else:
+        return image
 
 
 def equalize_histogram(image):
     image = util.to_ndarray(image)
-    print()
-    print('original')
-    print(np.min(image[:, :, 0]))
-    print(np.min(image[:, :, 1]))
-    print(np.min(image[:, :, 2]))
-    print(np.max(image[:, :, 0]))
-    print(np.max(image[:, :, 1]))
-    print(np.max(image[:, :, 2]))
     image_ycbcr = skimage.color.rgb2ycbcr(image)
     # image_ycbcr[:, :, 0] = skimage.exposure.rescale_intensity(
     #     image_ycbcr[:, :, 0], (16, 235), (0, 255))
-    print()
-    print('rescale_intensity to (0, 255)')
-    print(np.min(image_ycbcr[:, :, 0]))
-    print(np.min(image_ycbcr[:, :, 1]))
-    print(np.min(image_ycbcr[:, :, 2]))
-    print(np.max(image_ycbcr[:, :, 0]))
-    print(np.max(image_ycbcr[:, :, 1]))
-    print(np.max(image_ycbcr[:, :, 2]))
     # image_ycbcr[:, :, 0] = skimage.exposure.equalize_hist(image_ycbcr[:, :, 0]) * 255
     image_ycbcr[:, :, 0] = skimage.exposure.equalize_hist(image_ycbcr[:, :, 0])
-    print()
-    print('equalize_hist')
-    print(np.min(image_ycbcr[:, :, 0]))
-    print(np.min(image_ycbcr[:, :, 1]))
-    print(np.min(image_ycbcr[:, :, 2]))
-    print(np.max(image_ycbcr[:, :, 0]))
-    print(np.max(image_ycbcr[:, :, 1]))
-    print(np.max(image_ycbcr[:, :, 2]))
     image_ycbcr[:, :, 0] = skimage.exposure.rescale_intensity(
         image_ycbcr[:, :, 0], (0, 255), (16, 235))
-    print()
-    print('rescale_intensity to (16, 235)')
-    print(np.min(image_ycbcr[:, :, 0]))
-    print(np.min(image_ycbcr[:, :, 1]))
-    print(np.min(image_ycbcr[:, :, 2]))
-    print(np.max(image_ycbcr[:, :, 0]))
-    print(np.max(image_ycbcr[:, :, 1]))
-    print(np.max(image_ycbcr[:, :, 2]))
     image = skimage.color.ycbcr2rgb(image_ycbcr)
     return image
 
@@ -161,7 +138,12 @@ def equalize_histogram_ycbcr(image, color_sp='ycbcr'):
 
 
 def get_intensity(image):
-    b = np.array([1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0])
+    # RGB
+    if image.shape[2] == 3:
+        b = np.array([1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0])
+    # RGBA
+    else:
+        b = np.array([1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0, 0.0])
     intensity = np.tensordot(image, b, 1)
     return util.to_valid_image(intensity)
 

@@ -1,20 +1,21 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
+from typing import Tuple
 import keras.preprocessing.image as image
+import keras.optimizers
 import os
-import util
-import settings
 
 from . import model_helper
+from . import settings
+from . import util
 
 
 def directory_iterator(
-        path_to_image,
-        target_size,
+        path_to_image: str,
+        target_size: Tuple[int, int],
         classes,
-        batch_size):
+        batch_size: int):
     # image generator setttings
     generator = image.ImageDataGenerator(
         rotation_range=40,
@@ -40,80 +41,114 @@ def directory_iterator(
 
 def train(
         model_creator,
-        epochs,
-        path_to_train,
-        path_to_validation,
-        batch_size,
+        epochs: int,
+        path_to_train: str,
+        path_to_validation: str,
+        batch_size: int,
         classes,
-        target_size,
-        path_to_weight,
-        path_to_history):
+        target_size: Tuple[int, int],
+        path_to_weight: str,
+        path_to_history: str) -> None:
+
     dir_iter_train = directory_iterator(
         path_to_train, target_size, classes, batch_size)
     dir_iter_validation = directory_iterator(
         path_to_validation, target_size, classes, batch_size)
     model = model_creator()
 
-    # load validation data
+    steps_per_epoch = len(dir_iter_train.classes) / batch_size
+    validation_steps = len(dir_iter_validation.classes) / batch_size
+
     history = model.fit_generator(
         dir_iter_train,
-        steps_per_epoch=None,
+        steps_per_epoch=steps_per_epoch,
         epochs=epochs,
         validation_data=dir_iter_validation,
-        validation_steps=None)
+        validation_steps=validation_steps)
 
     model.save_weights(path_to_weight)
     util.save_history(history, path_to_history)
 
 
-def predict(model, path_to_image, target_size):
+def predict(
+        model_creator,
+        path_to_image: str,
+        target_size: Tuple[int, int],
+        path_to_weight: str):
+    model = model_creator(path_to_weight)
     xs = util.load_single_image(path_to_image, target_size)
     return model.predict(xs)
 
 
-def get_model_creator(base_model, classes, target_size, fine_tune):
+def preprocess_input(x):
+    return x / 255.0
+
+
+def get_model_creator(
+        base_model,
+        classes,
+        target_size: Tuple[int, int],
+        train_all_layers: bool):
     def creator(path_to_weight=None):
         if path_to_weight is None:
-            return model_helper.create_model(
-                base_model, classes, target_size, fine_tune=fine_tune)
+            model = model_helper.create_model(
+                base_model,
+                classes,
+                target_size,
+                train_all_layers=train_all_layers)
         else:
             model = model_helper.create_model(
-                base_model, classes, target_size, fine_tune=fine_tune)
-            model.load_weight(path_to_weight)
-            return model
+                base_model,
+                classes,
+                target_size,
+                train_all_layers=train_all_layers)
+            model.load_weights(path_to_weight)
+
+        model.compile(
+            loss='categorical_crossentropy',
+            optimizer=keras.optimizers.SGD(lr=1e-4, momentum=0.9),
+            metrics=['accuracy'])
+        return model
     return creator
 
 
 def main():
+    path_to_base = settings.path_to_base
     # paths
-    path_to_train = settings.path_to_image_train
-    path_to_validation = settings.path_to_image_validation
+    path_to_train = os.path.join(path_to_base, 'train')
+    path_to_validation = os.path.join(path_to_base, 'validation')
+    path_to_weight = os.path.join(path_to_base, 'weight.h5')
+    path_to_history = os.path.join(path_to_base, 'history.txt')
+
     batch_size = settings.batch_size
     target_size = settings.target_size
-    categories = settings.categories
-    path_to_weight = settings.path_to_weight_fc_layer
-    path_to_history = settings.path_to_history_fc_layer
+    classes = settings.categories
     epochs = settings.epochs
 
-    train(
-        get_model_creator,
-        epochs,
-        path_to_train,
-        path_to_validation,
-        batch_size,
-        categories,
-        target_size,
-        path_to_weight=path_to_weight,
-        path_to_history=path_to_history)
+    base_model = 'vgg16'
+    model_creator = get_model_creator(
+        base_model, classes, target_size, train_all_layers=False)
+
+    # train(
+    #     model_creator,
+    #     epochs,
+    #     path_to_train,
+    #     path_to_validation,
+    #     batch_size,
+    #     classes,
+    #     target_size,
+    #     path_to_weight=path_to_weight,
+    #     path_to_history=path_to_history)
 
     # predict by combined model
-    path_to_this_dir = os.path.abspath(os.path.dirname(__file__))
     path_to_image = os.path.join(
-        path_to_this_dir,
-        'path/to/image.jpg')
-    print('path_to_image: {0}'.format(path_to_image))
+        path_to_base,
+        'validation/open/img.retty.me_img_ebisu_restaurant_100000065182_archive_74619-580607dc43f64.jpg')
     results = predict(
-        path_to_image, target_size, path_to_weight)
+        model_creator,
+        path_to_image,
+        target_size,
+        path_to_weight)
     print(results)
 
 

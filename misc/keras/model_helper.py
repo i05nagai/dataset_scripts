@@ -6,7 +6,10 @@ import keras.models
 
 
 def _create_model_fine_tune(
-        base_model, classes, target_size, train_all_layers=False):
+        base_model,
+        classes,
+        target_size,
+        train_all_layers: bool=False):
 
     if isinstance(base_model, str):
         input_tensor = layers.Input(shape=(target_size[0], target_size[1], 3))
@@ -74,7 +77,10 @@ def inception_v3_top_fully_connected_layers(num_class, input_shape):
 
 
 def create_model(
-        base_model, classes, target_size, train_all_layers=False):
+        base_model,
+        classes,
+        target_size,
+        train_all_layers: bool=False):
     model = _create_model_fine_tune(
         base_model, classes, target_size, train_all_layers)
     return model

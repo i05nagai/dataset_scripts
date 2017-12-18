@@ -24,10 +24,14 @@ def save_history(history, result_file):
             fp.write(line.format(i, loss[i], acc[i], val_loss[i], val_acc[i]))
 
 
-def load_single_image(path_to_img, target_size):
+def load_single_image(path_to_img, target_size, preprocess_input=None):
     img = image.load_img(path_to_img, target_size=target_size)
     # img to numpy array
     x = image.img_to_array(img)
+
+    if preprocess_input is not None:
+        x = preprocess_input(x)
+
     # (samples, rows, cols, channels)
     xs = np.expand_dims(x, axis=0)
     return xs

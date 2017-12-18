@@ -1,64 +1,14 @@
 {
   "categories": [
     {
-      "path": "n07591961_paella",
-      "label": "paella",
-      "prefix": "paella"
+      "path": "../../",
+      "label": "private",
+      "prefix": "private"
     },
     {
-      "path": "n07619409_creme_brulee",
-      "label": "creme_brulee",
-      "prefix": "creme_brulee"
-    },
-    {
-      "path": "n07695965_sandwitch",
-      "label": "sandwitch",
-      "prefix": "sandwitch"
-    },
-    {
-      "path": "n07697313_cheeseburger",
-      "label": "cheeseburger",
-      "prefix": "cheeseburger"
-    },
-    {
-      "path": "n07697408_tunaburger",
-      "label": "tunaburger",
-      "prefix": "tunaburger"
-    },
-    {
-      "path": "n07698401_bacon_lettuce_tomato",
-      "label": "bacon_lettuce_tomato",
-      "prefix": "bacon_lettuce_tomato"
-    },
-    {
-      "path": "n07704205_congee",
-      "label": "congee",
-      "prefix": "congee"
-    },
-    {
-      "path": "n07831146_carbonara",
-      "label": "carbonara",
-      "prefix": "carbonara"
-    },
-    {
-      "path": "n07868200_french_toast",
-      "label": "french_toast",
-      "prefix": "french_toast"
-    },
-    {
-      "path": "n07867751_chocolate_fondue",
-      "label": "chocolate_fondue",
-      "prefix": "chocolate_fondue"
-    },
-    {
-      "path": "n07873807_pizza",
-      "label": "pizza",
-      "prefix": "pizza"
-    },
-    {
-      "path": "n07879350_sashimi",
-      "label": "sashimi",
-      "prefix": "sashimi"
+      "path": "../../",
+      "label": "open",
+      "prefix": "open"
     }
   ]
 }
