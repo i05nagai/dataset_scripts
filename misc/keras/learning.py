@@ -4,6 +4,7 @@ from __future__ import print_function
 from typing import Tuple
 import keras.preprocessing.image as image
 import keras.optimizers
+import keras.backend as K
 import os
 
 from . import model_helper
@@ -142,7 +143,7 @@ def main():
 
     # predict by combined model
     images = [
-        '',
+        'validation/open/img.retty.me_img_ebisu_restaurant_100000065182_archive_74619-580607dc43f64.jpg',
     ]
     for image in images:
         path_to_image = os.path.join(
@@ -152,6 +153,7 @@ def main():
             path_to_image,
             target_size,
             path_to_weight)
+        K.clear_session()
         print(results)
 
 
