@@ -143,7 +143,6 @@ def main():
 
     # predict by combined model
     images = [
-        'validation/open/img.retty.me_img_ebisu_restaurant_100000065182_archive_74619-580607dc43f64.jpg',
     ]
     for image in images:
         path_to_image = os.path.join(

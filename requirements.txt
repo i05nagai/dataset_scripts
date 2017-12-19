@@ -5,3 +5,4 @@ keras
 h5py
 yaml
 click
+tensorflow

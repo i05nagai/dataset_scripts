@@ -9,7 +9,18 @@ def _create_model_fine_tune(
         base_model,
         classes,
         target_size,
-        train_all_layers: bool=False):
+        train_all_layers=False):
+    """_create_model_fine_tune
+
+    :param base_model:
+    :type base_model: str
+    :param classes:
+    :param target_size:
+    :type target_size: Tuple[int
+    :param int]:
+    :param train_all_layers:
+    :type train_all_layers: bool
+    """
 
     if isinstance(base_model, str):
         input_tensor = layers.Input(shape=(target_size[0], target_size[1], 3))
@@ -80,7 +91,7 @@ def create_model(
         base_model,
         classes,
         target_size,
-        train_all_layers: bool=False):
+        train_all_layers=False):
     model = _create_model_fine_tune(
         base_model, classes, target_size, train_all_layers)
     return model
