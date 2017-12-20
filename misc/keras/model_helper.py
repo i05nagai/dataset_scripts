@@ -64,10 +64,10 @@ def resnet50_top_fully_connected_layers(num_class, input_shape):
 
 def vgg16_top_fully_connected_layers(num_class, input_shape):
     top_model = keras.models.Sequential()
-    top_model.add(layers.Flatten(input_shape=input_shape))
-    top_model.add(layers.Dense(256, activation='relu'))
-    top_model.add(layers.Dropout(0.5))
-    top_model.add(layers.Dense(num_class, activation='sigmoid', name='fc'))
+    top_model.add(layers.Flatten(input_shape=input_shape, name='flatten'))
+    top_model.add(layers.Dense(4096, activation='relu', name='fc1'))
+    top_model.add(layers.Dense(4096, activation='relu', name='fc2'))
+    top_model.add(layers.Dense(num_class, activation='softmax', name='predictions'))
     return top_model
 
 
