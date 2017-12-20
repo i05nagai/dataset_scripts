@@ -37,6 +37,20 @@ def load_single_image(path_to_img, target_size, preprocess_input=None):
     return xs
 
 
+def load_image_batch(paths, target_size, preprocess_input=None):
+    xs = []
+    for path in paths:
+        img = image.load_img(path, target_size=target_size)
+        x = image.img_to_array(img)
+        if preprocess_input is not None:
+            x = preprocess_input(x)
+        xs.append(x)
+    # (samples, rows, cols, channels)
+    xs = np.asarray(xs)
+    # xs = np.expand_dims(x, axis=0)
+    return xs
+
+
 def current_datetime_str():
     now = datetime.datetime.now()
     date_string = now.strftime('%Y_%m_%d_%H_%M_%S')
