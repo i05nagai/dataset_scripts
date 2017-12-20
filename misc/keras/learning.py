@@ -4,7 +4,6 @@ from __future__ import print_function
 from typing import Tuple
 import keras.preprocessing.image as image
 import keras.optimizers
-import keras.backend as K
 import os
 
 from . import model_helper
@@ -72,13 +71,50 @@ def train(
 
 
 def predict(
-        model_creator,
-        path_to_image: str,
-        target_size: Tuple[int, int],
-        path_to_weight: str):
-    model = model_creator(path_to_weight)
+        model,
+        path_to_image,
+        target_size,
+        path_to_weight):
+    """predict
+
+    :param model:
+    :param path_to_image:
+    :param target_size:
+    :param path_to_weight:
+
+    Example
+    ========
+
+    >>> model = model_creator(path_to_weight)
+    >>> for image in images:
+    >>>     path_to_image = os.path.join(
+    >>>         path_to_base, image)
+    >>>     results = predict(
+    >>>         model,
+    >>>         path_to_image,
+    >>>         target_size,
+    >>>         path_to_weight)
+    """
     xs = util.load_single_image(path_to_image, target_size, preprocess_input)
     return model.predict(xs)
+
+
+def predict_on_batch(
+        model_creator,
+        paths_to_image,
+        batch_size,
+        target_size,
+        path_to_weight):
+    model = model_creator(path_to_weight)
+    results = []
+
+    for i in range(0, len(paths_to_image), batch_size):
+        paths = paths_to_image[i:i + batch_size]
+        xs = util.load_image_batch(paths, target_size, preprocess_input)
+        result_batch = model.predict_on_batch(xs)
+        results.extend(result_batch)
+
+    return results
 
 
 def preprocess_input(x):
@@ -144,16 +180,14 @@ def main():
     # predict by combined model
     images = [
     ]
-    for image in images:
-        path_to_image = os.path.join(
-            path_to_base, image)
-        results = predict(
-            model_creator,
-            path_to_image,
-            target_size,
-            path_to_weight)
-        K.clear_session()
-        print(results)
+    images = [os.path.join(path_to_base, image) for image in images]
+
+    results = predict_on_batch(
+        model_creator,
+        images,
+        target_size,
+        path_to_weight)
+    print(results)
 
 
 if __name__ == '__main__':
