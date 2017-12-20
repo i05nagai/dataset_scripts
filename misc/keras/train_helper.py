@@ -24,11 +24,11 @@ def train_from_directory(
     iter_validation = fine_tune.gen_directory_iterator(
         path_to_validation, target_size, classes, batch_size, True)
 
-    # if iter used, steps are needed
+    # if iter used, steps is needed
     if steps_per_epoch_train is None:
-        steps_per_epoch_train = len(classes) / batch_size
+        steps_per_epoch_train = len(iter_train.classes) / batch_size
     if steps_per_epoch_validation is None:
-        steps_per_epoch_validation = len(classes) / batch_size
+        steps_per_epoch_validation = len(iter_validation.classes) / batch_size
 
     history = model.fit_generator(
         iter_train,
