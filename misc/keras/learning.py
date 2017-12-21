@@ -73,14 +73,12 @@ def train(
 def predict(
         model,
         path_to_image,
-        target_size,
-        path_to_weight):
+        target_size):
     """predict
 
     :param model:
     :param path_to_image:
     :param target_size:
-    :param path_to_weight:
 
     Example
     ========
@@ -92,20 +90,18 @@ def predict(
     >>>     results = predict(
     >>>         model,
     >>>         path_to_image,
-    >>>         target_size,
-    >>>         path_to_weight)
+    >>>         target_size)
     """
     xs = util.load_single_image(path_to_image, target_size, preprocess_input)
     return model.predict(xs)
 
 
 def predict_on_batch(
-        model_creator,
+        model,
         paths_to_image,
         batch_size,
         target_size,
         path_to_weight):
-    model = model_creator(path_to_weight)
     results = []
 
     for i in range(0, len(paths_to_image), batch_size):
@@ -181,9 +177,10 @@ def main():
     images = [
     ]
     images = [os.path.join(path_to_base, image) for image in images]
+    model = model_creator(path_to_weight)
 
     results = predict_on_batch(
-        model_creator,
+        model,
         images,
         target_size,
         path_to_weight)

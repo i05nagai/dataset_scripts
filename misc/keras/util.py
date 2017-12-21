@@ -47,7 +47,6 @@ def load_image_batch(paths, target_size, preprocess_input=None):
         xs.append(x)
     # (samples, rows, cols, channels)
     xs = np.asarray(xs)
-    # xs = np.expand_dims(x, axis=0)
     return xs
 
 
