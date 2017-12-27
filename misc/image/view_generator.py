@@ -1,4 +1,5 @@
 import os
+from ..util import filesystem
 
 
 PATH_TO_THIS_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -60,3 +61,9 @@ def save_image_gallery(images_list, path_to_output):
             f.write(html)
     except IOError as e:
         print(e)
+
+
+def save_image_gallery_from_path(path_to_dir, path_to_output):
+    images = filesystem.get_filepath(path_to_dir)
+    images_list = [images]
+    save_image_gallery(images_list, path_to_output)

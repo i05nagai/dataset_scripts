@@ -1,7 +1,23 @@
+from .. import util
+
 import skimage
 import skimage.filters
-from .. import util
 import numpy as np
+import scipy.ndimage as ndimage
+
+
+DEFAULT_KERNEL = np.array(
+    [[0, -1, 0],
+     [-1, 6, -1],
+     [0, -1, 0]]) / 2.2
+
+
+def sharpen_kernel(image, kernel=DEFAULT_KERNEL):
+    image = util.copy(image, dtype='float64')
+    for c in range(0, 3):
+        image[:, :, c] = ndimage.convolve(image[:, :, c], kernel)
+    image = util.to_valid_image(image)
+    return image.astype('uint8', copy=False)
 
 
 def sharpen(image, radius=0, percent=100, threshold=4.0):
