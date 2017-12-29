@@ -9,13 +9,13 @@ import scipy.ndimage as ndimage
 DEFAULT_KERNEL = np.array(
     [[0, -1, 0],
      [-1, 6, -1],
-     [0, -1, 0]]) / 2.2
+     [0, -1, 0]])
 
 
-def sharpen_kernel(image, kernel=DEFAULT_KERNEL):
-    image = util.copy(image, dtype='float64')
+def sharpen_kernel(image, kernel=DEFAULT_KERNEL, divisor=2.2):
+    image = util.copy(image, dtype='float32')
     for c in range(0, 3):
-        image[:, :, c] = ndimage.convolve(image[:, :, c], kernel)
+        image[:, :, c] = ndimage.convolve(image[:, :, c], kernel) / divisor
     image = util.to_valid_image(image)
     return image.astype('uint8', copy=False)
 

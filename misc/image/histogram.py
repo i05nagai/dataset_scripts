@@ -72,8 +72,8 @@ def adjust_contrast_css(image, contrast=0):
     :param contrast:
     """
     image = util.to_ndarray(image)
-    image = util.copy(image, dtype='float64')
-    image = contrast * image - (contrast * 0.5) + 0.5
+    image = util.copy(image, dtype='uint16')
+    image = contrast * image + (0.5 - (contrast * 0.5)) * 255
     image = util.to_valid_image(image)
     return image.astype('uint8', copy=False)
 
@@ -108,9 +108,9 @@ def adjust_saturation_css(image, saturation=0):
         [0.213 + 0.787 * s, 0.715 - 0.715 * s, 0.072 - 0.072 * s],
         [0.213 - 0.213 * s, 0.715 + 0.285 * s, 0.072 - 0.072 * s],
         [0.213 - 0.213 * s, 0.715 - 0.715 * s, 0.072 + 0.928 * s],
-    ])
+    ]).T
     image = util.to_ndarray(image)
-    image = util.copy(image, dtype='float16')
+    image = util.copy(image, dtype='float64')
     image = np.tensordot(image, color_matrix, 1)
     image = util.to_valid_image(image)
     return image.astype('uint8', copy=False)
