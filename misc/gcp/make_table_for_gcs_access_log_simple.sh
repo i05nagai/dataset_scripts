@@ -18,7 +18,7 @@ EOF
 }
 
 ################################################################################
-# Description
+# Description:
 # Globals:
 #  DATASET
 # Arguments:

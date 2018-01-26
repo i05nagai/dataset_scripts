@@ -268,3 +268,106 @@ def upload_jsons_into_table(
         json_file, table_ref, job_config=job_config)
     # Waits for table load to complete.
     return job.result()
+
+
+def load_table_from_csv(client, dataset_id, table_id, path_to_csv):
+    """load_table_from_csv
+    load csv file to table.
+
+    :param client:
+    :param dataset_id:
+    :type dataset_id: str
+    :param table_id:
+    :type table_id: str
+    :param path_to_csv:
+    :type path_to_csv: str
+    """
+    dataset = get_dataset(client, dataset_id)
+    table_ref = dataset.table(table_id)
+
+    job_config = bigquery.LoadJobConfig()
+    job_config.source_format = 'CSV'
+    job_config.skip_leading_rows = 1
+    job = client.load_table_from_file(
+        path_to_csv, table_ref, job_config=job_config)
+    # Waits for table load to complete.
+    return job.result()
+
+
+def _load_table_from_gcs(
+        client, dataset_id, table_id, url_gcs, job_id_prefix=''):
+    """load_table_from_csv
+    load csv file to table.
+
+    :param client:
+    :param dataset_id:
+    :type dataset_id: str
+    :param table_id:
+    :type table_id: str
+    :param url_gcs:
+    :type url_gcs: str
+    :param job_id_prefix:
+    :type job_id_prefix: str
+    """
+    dataset = get_dataset(client, dataset_id)
+    table_ref = dataset.table(table_id)
+
+    job_config = bigquery.LoadJobConfig()
+    job_config.create_disposition = 'NEVER'
+    job_config.skip_leading_rows = 1
+    job_config.source_format = 'CSV'
+    job_config.write_disposition = 'WRITE_EMPTY'
+    load_job = client.load_table_from_uri(
+        url_gcs, table_ref, job_config=job_config, job_id_prefix=job_id_prefix)
+    # Waits for table load to complete.
+    return load_job.result()
+
+
+def load_table_from_gcs(
+        client,
+        dataset_id,
+        table_id,
+        url_gcs,
+        job_id_prefix='',
+        safe_mode=True):
+    if safe_mode:
+        hashcode = get_random_hashcode()
+        temp_table_id = 'load_temp_{0}_{1}'.format(hashcode, table_id)
+
+        # load to temp table
+        _load_table_from_gcs(
+            client, dataset_id, temp_table_id, url_gcs, job_id_prefix)
+        # copy to destination table
+        copy_table(
+            client,
+            dataset_id,
+            temp_table_id,
+            dataset_id,
+            table_id)
+    else:
+        _load_table_from_gcs(
+            client, dataset_id, temp_table_id, url_gcs, job_id_prefix)
+
+
+def copy_table(
+        client,
+        from_dataset_id,
+        from_table_id,
+        to_dataset_id,
+        to_table_id):
+    from_dataset = get_dataset(client, from_dataset_id)
+    from_table_ref = from_dataset.table(from_table_id)
+
+    to_dataset = get_dataset(client, to_dataset_id)
+    to_table_ref = to_dataset.table(to_table_id)
+
+    job_config = bigquery.CopyJobConfig()
+    job = client.copy_table(
+        from_table_ref, to_table_ref, job_config=job_config)
+    # Waits for job to complete.
+    return job.result()
+
+
+def get_random_hashcode():
+    hashcode = random.getrandbits(128)
+    return hex(hashcode)[2:-1]
