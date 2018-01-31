@@ -3,10 +3,22 @@ Environment variblaes
 =====================
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/keyfile.json"
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 from google.cloud import storage
+import os
+import util
 
 
-def create_client(project_id, path_to_json_key=None):
+def get_blob_uri(blob):
+    return 'gs://{0}/{1}'.format(
+        blob.bucket.name, blob.name)
+
+
+def get_client(project_id, path_to_json_key=None):
     if path_to_json_key is not None:
         return storage.Client.from_service_account_json(
             json_credentials_path=path_to_json_key,
@@ -47,7 +59,7 @@ def list_buckets(client, bucket_id, path):
     return client.list_buckets(prefix=path)
 
 
-def list_blobs(client, bucket_id, path):
+def list_blobs(client, bucket_id, path=''):
     """list_blobs
 
     :param client:
@@ -58,15 +70,15 @@ def list_blobs(client, bucket_id, path):
     return bucket.list_blobs(prefix=path)
 
 
-def get_blob(blob, base_dir):
-    path_to_file = os.path.join(base_dir, blob.name)
-    blob = get_blob(client, bucket_id, path_to_blob)
+def download_blob(client, blob, path_to_base):
+    path_to_file = os.path.join(path_to_base, blob.name)
+    util.make_directory(os.path.dirname(path_to_file))
     blob.download_to_filename(path_to_file)
     return path_to_file
 
 
-def get_blobs(blobs, base_dir):
+def download_blobs(client, blobs, path_to_base):
     paths = []
     for blob in blobs:
-        paths.append(get_blob(blob, base_dir))
+        paths.append(download_blob(client, blob, path_to_base))
     return paths

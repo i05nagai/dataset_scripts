@@ -5,6 +5,10 @@ from __future__ import unicode_literals
 
 from google.cloud import bigquery
 import io
+import random
+import json
+
+import util
 
 
 def get_client(project_id):
@@ -183,7 +187,13 @@ def json_to_schema(json_schema):
             field_type=field_type,
             description=description)
         schemas.append(schema)
-    return schema
+    return schemas
+
+
+def load_schema(path_to_schema):
+    with open(path_to_schema, 'r') as f:
+        json_data = json.load(f)
+    return json_to_schema(json_data)
 
 
 def json_to_query_parameter(json_array):
@@ -257,6 +267,13 @@ def json_row_to_str(json_row):
 
 def upload_jsons_into_table(
         client, dataset_id, table_id, json_rows):
+    """upload_jsons_into_table
+
+    :param client:
+    :param dataset_id:
+    :param table_id:
+    :param json_rows: array of jsons
+    """
     jsons = ',\n'.join([json_row_to_str(json_row) for json_row in json_rows])
     json_file = io.BytesIO(b'{0}'.format(jsons))
     dataset = get_dataset(client, dataset_id)
@@ -270,7 +287,12 @@ def upload_jsons_into_table(
     return job.result()
 
 
-def load_table_from_csv(client, dataset_id, table_id, path_to_csv):
+def load_table_from_csv(
+        client,
+        dataset_id,
+        table_id,
+        path_to_csv,
+        path_to_schema=None):
     """load_table_from_csv
     load csv file to table.
 
@@ -285,17 +307,33 @@ def load_table_from_csv(client, dataset_id, table_id, path_to_csv):
     dataset = get_dataset(client, dataset_id)
     table_ref = dataset.table(table_id)
 
+    # load csv
+    rows = util.read_csv(path_to_csv)
+    # array of array to string
+    csv_string = '\n'.join([','.join(row) for row in rows])
+    csv_obj = io.BytesIO(b'{0}'.format(csv_string))
+
+    # job_config
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = 'CSV'
     job_config.skip_leading_rows = 1
+    # schema
+    if path_to_schema is not None:
+        job_config.schema = load_schema(path_to_schema)
+
     job = client.load_table_from_file(
-        path_to_csv, table_ref, job_config=job_config)
+        csv_obj, table_ref, job_config=job_config)
     # Waits for table load to complete.
     return job.result()
 
 
 def _load_table_from_gcs(
-        client, dataset_id, table_id, url_gcs, job_id_prefix=''):
+        client,
+        dataset_id,
+        table_id,
+        url_gcs,
+        job_id_prefix='',
+        path_to_schema=None):
     """load_table_from_csv
     load csv file to table.
 
@@ -312,11 +350,15 @@ def _load_table_from_gcs(
     dataset = get_dataset(client, dataset_id)
     table_ref = dataset.table(table_id)
 
+    # job_confing
     job_config = bigquery.LoadJobConfig()
-    job_config.create_disposition = 'NEVER'
     job_config.skip_leading_rows = 1
     job_config.source_format = 'CSV'
-    job_config.write_disposition = 'WRITE_EMPTY'
+    job_config.write_disposition = 'WRITE_APPEND'
+    # schema
+    if path_to_schema is not None:
+        job_config.schema = load_schema(path_to_schema)
+
     load_job = client.load_table_from_uri(
         url_gcs, table_ref, job_config=job_config, job_id_prefix=job_id_prefix)
     # Waits for table load to complete.
@@ -328,25 +370,38 @@ def load_table_from_gcs(
         dataset_id,
         table_id,
         url_gcs,
-        job_id_prefix='',
-        safe_mode=True):
+        path_to_schema=None,
+        safe_mode=True,
+        job_id_prefix=''):
+    # if safemode is true, load data to temporary table
     if safe_mode:
         hashcode = get_random_hashcode()
-        temp_table_id = 'load_temp_{0}_{1}'.format(hashcode, table_id)
+        temp_table_id = 'load_table_{0}_{1}'.format(hashcode, table_id)
 
         # load to temp table
         _load_table_from_gcs(
-            client, dataset_id, temp_table_id, url_gcs, job_id_prefix)
+            client,
+            dataset_id,
+            temp_table_id,
+            url_gcs,
+            job_id_prefix,
+            path_to_schema)
         # copy to destination table
         copy_table(
             client,
             dataset_id,
             temp_table_id,
             dataset_id,
-            table_id)
+            table_id,
+            path_to_schema)
     else:
         _load_table_from_gcs(
-            client, dataset_id, temp_table_id, url_gcs, job_id_prefix)
+            client,
+            dataset_id,
+            table_id,
+            url_gcs,
+            job_id_prefix,
+            path_to_schema)
 
 
 def copy_table(
@@ -354,14 +409,20 @@ def copy_table(
         from_dataset_id,
         from_table_id,
         to_dataset_id,
-        to_table_id):
+        to_table_id,
+        path_to_schema=None):
     from_dataset = get_dataset(client, from_dataset_id)
     from_table_ref = from_dataset.table(from_table_id)
 
     to_dataset = get_dataset(client, to_dataset_id)
     to_table_ref = to_dataset.table(to_table_id)
 
+    # job_confing
     job_config = bigquery.CopyJobConfig()
+    # schema
+    if path_to_schema is not None:
+        job_config.schema = load_schema(path_to_schema)
+
     job = client.copy_table(
         from_table_ref, to_table_ref, job_config=job_config)
     # Waits for job to complete.
