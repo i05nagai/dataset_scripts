@@ -3,12 +3,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from ..util import csv_helper
+
 from google.cloud import bigquery
 import io
 import random
 import json
-
-import util
 
 
 def get_client(project_id):
@@ -104,6 +104,13 @@ class QueryRunner(object):
         self.timeout_sec = timeout_sec
 
     def run_from_file(self, filename, parameters=[]):
+        """run_from_file
+
+        :param filename:
+        :param parameters:
+
+        :return: list of dictionary
+        """
         query = ''
         try:
             with open(filename, 'r') as f:
@@ -113,6 +120,13 @@ class QueryRunner(object):
         return self.run_sync(query, parameters)
 
     def run_sync(self, query, parameters=[]):
+        """run_sync
+
+        :param query:
+        :param parameters:
+
+        :return: list of dictionary
+        """
         parameters = json_to_query_parameter(parameters)
         job_config = bigquery.QueryJobConfig()
         job_config.query_parameters = parameters
@@ -308,7 +322,7 @@ def load_table_from_csv(
     table_ref = dataset.table(table_id)
 
     # load csv
-    rows = util.read_csv(path_to_csv)
+    rows = csv_helper.read_csv(path_to_csv)
     # array of array to string
     csv_string = '\n'.join([','.join(row) for row in rows])
     csv_obj = io.BytesIO(b'{0}'.format(csv_string))
