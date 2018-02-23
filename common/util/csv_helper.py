@@ -1,15 +1,17 @@
 import csv
 
 
-def read_as_dict(path):
+def read_as_dict(path, skipHeader=True):
     """read_as_dict
 
     :param path:
     """
     with open(path, 'r') as f:
         reader = csv.reader(f)
-        # skip header
         header = next(reader)
+        if not skipHeader:
+            yield header
+
         for row in reader:
             yield dict(zip(header, row))
 
@@ -17,13 +19,21 @@ def read_as_dict(path):
 def read_csv(path):
     with open(path, 'r') as f:
         reader = csv.reader(f)
-        return [row for row in reader]
+        for row in reader:
+            yield row
 
 
 def write_csv(path, data):
     with open(path, 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
         writer.writerows(data)
+
+
+def write_dict_as_csv(path, data):
+    with open(path, 'w') as f:
+        writer = csv.writer(f, lineterminator='\n')
+        for k, v in data:
+            writer.writerow([k, v])
 
 
 def write_array_of_dict(path, data, write_header=True):
