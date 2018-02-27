@@ -10,7 +10,7 @@ def predict_from_directory_test(faker, mocker):
     preprocess_function = None
     decode_predictions = None
 
-    actual = predict_from_directory(
+    actual = target.predict_from_directory(
         model, path_to_dir, target_size,
         data_format, color_mode, preprocess_function,
         decode_predictions)

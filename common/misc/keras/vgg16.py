@@ -9,8 +9,8 @@ import keras.layers as layers
 import math
 import numpy as np
 import os
-import util
 import settings
+import util
 
 
 def directory_iterator(

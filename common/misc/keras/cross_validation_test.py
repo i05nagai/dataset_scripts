@@ -1,7 +1,7 @@
 from . import cross_validation as target
-import sklearn.model_selection as model_selection
-from . import settings
 from . import fine_tune
+from . import settings
+import sklearn.model_selection as model_selection
 
 
 def validate_test():

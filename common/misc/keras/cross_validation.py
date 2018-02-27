@@ -1,7 +1,7 @@
-import numpy as np
 import keras.backend as K
-import sklearn.model_selection as model_selection
 import keras.utils
+import numpy as np
+import sklearn.model_selection as model_selection
 
 from . import util_image
 from . import util_file

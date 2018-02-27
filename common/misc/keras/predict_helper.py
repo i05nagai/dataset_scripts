@@ -1,5 +1,5 @@
 from . import util_image
-from ..util import filesystem
+from ...util import filesystem
 
 
 def predict_from_directory(

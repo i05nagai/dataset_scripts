@@ -1,7 +1,7 @@
 from . import classify as target
 from . import model_helper
-from . import util_image
 from . import settings
+from . import util_image
 import os
 
 

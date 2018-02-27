@@ -3,6 +3,7 @@ scrapy
 pillow
 keras
 h5py
-yaml
+pyyaml
 click
 tensorflow
+scikit-learn

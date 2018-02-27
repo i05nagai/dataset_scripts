@@ -1,8 +1,8 @@
 import os
 import re
 
-from ..util import filesystem
 from . import util
+from ...util import filesystem
 
 
 class PathManager(object):

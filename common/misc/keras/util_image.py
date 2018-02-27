@@ -1,7 +1,7 @@
 import keras.applications.imagenet_utils as imagenet_utils
-import numpy as np
 import keras.backend as K
 import keras.preprocessing.image as image
+import numpy as np
 
 from . import util
 

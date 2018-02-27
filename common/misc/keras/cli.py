@@ -1,8 +1,9 @@
 import os
 import csv
 
-from . import settings
 import click
+
+from . import settings
 
 
 MODELS = [
