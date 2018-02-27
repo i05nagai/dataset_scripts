@@ -63,7 +63,7 @@ def run(task, records, num_threads=3, show_progress=None, max_queue=100000):
 
     for i, record in enumerate(records):
         if show_progress is not None and (i % show_progress) == 0:
-            print("Processing {0} images... ".format(i), file=sys.stderr)
+            print("Processing {0} items... ".format(i), file=sys.stderr)
         if (i % max_queue) == (max_queue - 1):
             print("Wait until queued tasks are processed...", file=sys.stderr)
             Worker.wait()
