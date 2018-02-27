@@ -14,15 +14,15 @@ def classify_directory_test():
     color_mode = 'rgb'
     model_name = 'resnet50'
 
-    model = model_helper.create_model(
-        model_name, len(classes), target_size)
+    # model = model_helper.create_model(
+    #     model_name, len(classes), target_size)
 
-    results = target.classify_directory(
-        model,
-        path_to_test,
-        classes,
-        target_size=target_size,
-        data_format=data_format,
-        color_mode=color_mode,
-        preprocess_function=util_image.preprocess_function)
-    print(results)
+    # results = target.classify_directory(
+    #     model,
+    #     path_to_test,
+    #     classes,
+    #     target_size=target_size,
+    #     data_format=data_format,
+    #     color_mode=color_mode,
+    #     preprocess_function=util_image.preprocess_function)
+    # print(results)

@@ -13,13 +13,13 @@ def train_test():
     target_size = settings.target_size
     epochs = settings.epochs
 
-    target.train(
-        model_name,
-        classes,
-        batch_size,
-        target_size,
-        epochs,
-        path_to_base)
+    # target.train(
+    #     model_name,
+    #     classes,
+    #     batch_size,
+    #     target_size,
+    #     epochs,
+    #     path_to_base)
 
 
 def predict_test():
@@ -33,12 +33,12 @@ def predict_test():
     target_size = settings.target_size
     path_to_base = settings.path_to_base
 
-    results = target.predict(
-        paths,
-        model_name,
-        classes,
-        target_size,
-        path_to_base)
+    # results = target.predict(
+    #     paths,
+    #     model_name,
+    #     classes,
+    #     target_size,
+    #     path_to_base)
 
-    import pprint
-    pprint.pprint(results)
+    # import pprint
+    # pprint.pprint(results)
