@@ -7,6 +7,7 @@ __pycache__
 *.pyc
 .coverage
 .cache
+.pytest_cache
 .eggs
 # images
 *.jpg
