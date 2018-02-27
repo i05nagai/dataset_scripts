@@ -20,6 +20,7 @@ class Worker(threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
         self._task = task
+        self.values = {}
 
     def run(self):
         while True:
@@ -28,7 +29,7 @@ class Worker(threading.Thread):
             if record is None:
                 Worker._queue.task_done()
                 break
-            self._task(record)
+            self._task(record, self.values)
             Worker._queue.task_done()
 
     @classmethod
@@ -40,12 +41,12 @@ class Worker(threading.Thread):
         Worker._queue.join()
 
 
-def run(num_threads, task, records, show_progress=None, max_queue=100000):
+def run(task, records, num_threads=3, show_progress=None, max_queue=100000):
     """run
 
     :param num_threads:
     :int num_threads:
-    :param task:
+    :param task: f(record, values)
     :type task: Callable
     :param records:
     :type records: iterable
@@ -72,3 +73,6 @@ def run(num_threads, task, records, show_progress=None, max_queue=100000):
         Worker.put(None)
 
     Worker.wait()
+
+    # collect values
+    return [(t.name, t.values) for t in threads]
