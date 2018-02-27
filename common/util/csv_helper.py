@@ -5,6 +5,7 @@ def read_as_dict(path, skipHeader=True):
     """read_as_dict
 
     :param path:
+    :type path: str
     """
     with open(path, 'r') as f:
         reader = csv.reader(f)
@@ -24,12 +25,37 @@ def read_csv(path):
 
 
 def write_csv(path, data):
+    """write_csv
+
+    :param path:
+    :type path: str
+    :param data:
+    :type data: list of list
+    """
     with open(path, 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
         writer.writerows(data)
 
 
 def write_dict_as_csv(path, data):
+    """write_dict_as_csv
+
+    :param path:
+    :param data:
+    :type data: dict
+
+    Examples
+    ========
+    >>> path = '/path/to/output'
+    >>> data = {
+    >>>     'value11': 'value12',
+    >>>     'value21': 'value22',
+    >>> }
+    >>> write_dict_as_csv(path, data)
+    >>> # generated csv is formed as follows:
+    >>> # valu11,value12
+    >>> # value21,value22
+    """
     with open(path, 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
         for k, v in data.items():
@@ -37,6 +63,14 @@ def write_dict_as_csv(path, data):
 
 
 def write_array_of_dict(path, data, write_header=True):
+    """write_array_of_dict
+
+    :param path:
+    :type path: str
+    :param data:
+    :type data: list of dict
+    :param write_header:
+    """
     with open(path, 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
         # write header
@@ -55,7 +89,9 @@ def append_csv(path, data):
     """append_csv
 
     :param path:
+    :type path: str
     :param data:
+    :list data:
     """
     with open(path, 'a') as f:
         writer = csv.writer(f, lineterminator='\n')
