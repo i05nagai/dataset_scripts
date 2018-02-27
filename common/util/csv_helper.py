@@ -32,7 +32,7 @@ def write_csv(path, data):
 def write_dict_as_csv(path, data):
     with open(path, 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
-        for k, v in data:
+        for k, v in data.items():
             writer.writerow([k, v])
 
 
