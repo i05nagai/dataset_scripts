@@ -3,8 +3,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 import errno
-import os
 import json
+import os
+import re
 import shutil
 
 
@@ -32,6 +33,18 @@ def get_filepath(path_to_dir, recursive=True):
                 path_to_file = os.path.join(root, fnames)
                 filepaths.append(path_to_file)
         return filepaths
+
+
+def get_filepath_with_pattern(path_to_dir, filename_pattern, recursive=True):
+    filenames = get_filepath(path_to_dir, recursive)
+
+    def rule(filename):
+        match_object = re.search(filename_pattern, filename)
+        if match_object:
+            return True
+        return False
+
+    return list(filter(rule, filenames))
 
 
 def get_parent_dir(path_to_dir):

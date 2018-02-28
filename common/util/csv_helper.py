@@ -33,7 +33,11 @@ def write_csv(path, data):
     :type data: list of list
     """
     with open(path, 'w') as f:
-        writer = csv.writer(f, lineterminator='\n')
+        writer = csv.writer(
+            f,
+            lineterminator='\n',
+            quotechar='"',
+            quoting=csv.QUOTE_NONNUMERIC)
         writer.writerows(data)
 
 
