@@ -8,7 +8,7 @@ def get_stop_words():
     """get_stop_words
     from slothlib
     """
-    url = 'http://svn.sourceforge.jp/svnroot/slothlib/CSharp/Version1/SlothLib/NLP/Filter/StopWord/word/Japanese.txt'
+    url = 'http://svn.sourceforge.jp/svnroot/slothlib/CSharp/Version1/SlothLib/NLP/Filter/StopWord/word/Japanese.txt'  # noqa
     lines = urllib.request.urlopen(url)
     stopwords = [line.decode('utf-8').strip() for line in lines]
     stopwords = [ss for ss in stopwords if not ss == '']
@@ -28,8 +28,7 @@ class Parser(object):
         options_str = ' '.join(options)
         self.mecab = MeCab.Tagger(options_str)
 
-        # warm up
-        # this is for fixing bug
+        # warm up for fixing bug
         # see https://qiita.com/piruty/items/ce218090eae53b775b79
         self.mecab.parse('')
 
