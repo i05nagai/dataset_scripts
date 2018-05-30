@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 import csv
 
 
@@ -17,7 +22,24 @@ def read_as_dict(path, skipHeader=True):
             yield dict(zip(header, row))
 
 
+def read_tsv(path):
+    """read_tsv
+
+    :param path:
+    :type path: str
+    """
+    with open(path, 'r') as f:
+        reader = csv.reader(f, delimiter='\t')
+        for row in reader:
+            yield row
+
+
 def read_csv(path):
+    """read_csv
+
+    :param path:
+    :type path: str
+    """
     with open(path, 'r') as f:
         reader = csv.reader(f)
         for row in reader:

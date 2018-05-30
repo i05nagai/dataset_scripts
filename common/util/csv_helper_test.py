@@ -49,3 +49,16 @@ val1, val2
     # assert
     for i, row in enumerate(generator):
         assert row == expect[i]
+
+
+def write_csv_test(faker, mocker):
+    """write_csv
+
+    :param path:
+    :type path: str
+    :param data:
+    :type data: list of list
+    """
+    with open(path, 'w') as f:
+        writer = csv.writer(f, lineterminator='\n')
+        writer.writerows(data)

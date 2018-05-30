@@ -3,7 +3,7 @@ import skimage.transform
 import os
 import numpy as np
 
-from ..util import filesystem
+from ...util import filesystem
 
 
 def copy(image, dtype=None):

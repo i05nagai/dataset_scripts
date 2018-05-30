@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from . import util
+import scipy
 import skimage.exposure
 import skimage.io
 import skimage.color
@@ -112,6 +113,24 @@ def adjust_saturation_css(image, saturation=0):
     image = util.to_ndarray(image)
     image = util.copy(image, dtype='float64')
     image = np.tensordot(image, color_matrix, 1)
+    image = util.to_valid_image(image)
+    return image.astype('uint8', copy=False)
+
+
+def adjust_convolve_matrix_css(image, kernel=[[0, -1.0, 0], [-1.0, 5.0, -1.0], [0, -1.0, 0]]):
+    """adjust_convolve_css
+    CSS specification compatible convolution matrix
+
+    https://www.w3.org/TR/filter-effects-1/#feConvolveMatrixElement
+
+    :param image:
+    :param kernel:
+    """
+    kernel = np.array(kernel)
+    image = util.to_ndarray(image)
+    image = util.copy(image, dtype='float64')
+    for c in range(image.shape[2]):
+        image[:, :, c] = scipy.ndimage.filters.convolve(image[:, :, c], kernel, mode='reflect')
     image = util.to_valid_image(image)
     return image.astype('uint8', copy=False)
 
